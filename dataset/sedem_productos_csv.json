@@ -1,0 +1,52 @@
+{
+	"name": "sedem_productos_csv",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "datalake_subsidios",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "bronze"
+		},
+		"annotations": [],
+		"type": "DelimitedText",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobStorageLocation",
+				"fileName": "sedem_productos.csv",
+				"folderPath": "sedem",
+				"container": "bronze"
+			},
+			"columnDelimiter": ",",
+			"escapeChar": "\\",
+			"firstRowAsHeader": true,
+			"quoteChar": "\""
+		},
+		"schema": [
+			{
+				"name": "producto_id",
+				"type": "String"
+			},
+			{
+				"name": "empresa_id",
+				"type": "String"
+			},
+			{
+				"name": "nombre",
+				"type": "String"
+			},
+			{
+				"name": "categoria",
+				"type": "String"
+			},
+			{
+				"name": "presentacion",
+				"type": "String"
+			},
+			{
+				"name": "estado",
+				"type": "String"
+			}
+		]
+	}
+}

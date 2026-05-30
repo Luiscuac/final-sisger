@@ -1,0 +1,68 @@
+{
+	"name": "sedem_inventario_csv",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "datalake_subsidios",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "bronze"
+		},
+		"annotations": [],
+		"type": "DelimitedText",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobStorageLocation",
+				"fileName": "sedem_inventario.csv",
+				"folderPath": "sedem",
+				"container": "bronze"
+			},
+			"columnDelimiter": ",",
+			"escapeChar": "\\",
+			"firstRowAsHeader": true,
+			"quoteChar": "\""
+		},
+		"schema": [
+			{
+				"name": "inventario_id",
+				"type": "String"
+			},
+			{
+				"name": "empresa_id",
+				"type": "String"
+			},
+			{
+				"name": "producto_id",
+				"type": "String"
+			},
+			{
+				"name": "nro_lote",
+				"type": "String"
+			},
+			{
+				"name": "cantidad_producida",
+				"type": "String"
+			},
+			{
+				"name": "cantidad_despachada",
+				"type": "String"
+			},
+			{
+				"name": "cantidad_disponible",
+				"type": "String"
+			},
+			{
+				"name": "estado",
+				"type": "String"
+			},
+			{
+				"name": "fecha_ultimo_movimiento",
+				"type": "String"
+			},
+			{
+				"name": "almacen",
+				"type": "String"
+			}
+		]
+	}
+}

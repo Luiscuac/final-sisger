@@ -1,0 +1,52 @@
+{
+	"name": "tbl_agencia_recepciones",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "dw_subsiduios",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "silver"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "recepcion_id",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "nro_lote",
+				"type": "varchar"
+			},
+			{
+				"name": "almacen_id",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "fecha_recepcion",
+				"type": "date"
+			},
+			{
+				"name": "cantidad_recibida",
+				"type": "decimal",
+				"precision": 18,
+				"scale": 2
+			},
+			{
+				"name": "condicion",
+				"type": "varchar"
+			},
+			{
+				"name": "estado",
+				"type": "varchar"
+			}
+		],
+		"typeProperties": {
+			"schema": "silver",
+			"table": "tbl_agencia_recepciones"
+		}
+	}
+}

@@ -1,0 +1,41 @@
+{
+	"name": "tbl_sup_paquetes",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "dw_subsiduios",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "silver"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "paquete_id",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "nombre",
+				"type": "varchar"
+			},
+			{
+				"name": "peso_estandar_kg",
+				"type": "decimal",
+				"precision": 10,
+				"scale": 2
+			},
+			{
+				"name": "costo_estimado_bs",
+				"type": "decimal",
+				"precision": 10,
+				"scale": 2
+			}
+		],
+		"typeProperties": {
+			"schema": "silver",
+			"table": "tbl_sup_paquetes"
+		}
+	}
+}

@@ -1,0 +1,43 @@
+{
+	"name": "tbl_agencia_almacenes",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "dw_subsiduios",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "silver"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "almacen_id",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "nombre",
+				"type": "varchar"
+			},
+			{
+				"name": "municipio",
+				"type": "varchar"
+			},
+			{
+				"name": "departamento",
+				"type": "varchar"
+			},
+			{
+				"name": "capacidad_m3",
+				"type": "decimal",
+				"precision": 10,
+				"scale": 2
+			}
+		],
+		"typeProperties": {
+			"schema": "silver",
+			"table": "tbl_agencia_almacenes"
+		}
+	}
+}

@@ -1,0 +1,73 @@
+{
+	"name": "tbl_sedem_produccion",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "dw_subsiduios",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "silver"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "produccion_id",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "planta_id",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "producto_id",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "nro_lote",
+				"type": "varchar"
+			},
+			{
+				"name": "fecha_produccion",
+				"type": "date"
+			},
+			{
+				"name": "fecha_vencimiento",
+				"type": "date"
+			},
+			{
+				"name": "cantidad_producida",
+				"type": "decimal",
+				"precision": 18,
+				"scale": 2
+			},
+			{
+				"name": "cantidad_despachada",
+				"type": "decimal",
+				"precision": 18,
+				"scale": 2
+			},
+			{
+				"name": "costo_produccion_bs",
+				"type": "decimal",
+				"precision": 18,
+				"scale": 2
+			},
+			{
+				"name": "unidad",
+				"type": "varchar"
+			},
+			{
+				"name": "estado",
+				"type": "varchar"
+			}
+		],
+		"typeProperties": {
+			"schema": "silver",
+			"table": "tbl_sedem_produccion"
+		}
+	}
+}

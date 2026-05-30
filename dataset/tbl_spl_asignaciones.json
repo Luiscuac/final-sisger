@@ -1,0 +1,64 @@
+{
+	"name": "tbl_spl_asignaciones",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "dw_subsiduios",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "silver"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "asignacion_id",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "ci_beneficiaria",
+				"type": "varchar"
+			},
+			{
+				"name": "empleador_id",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "mes",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "gestion",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "monto_bs",
+				"type": "decimal",
+				"precision": 10,
+				"scale": 2
+			},
+			{
+				"name": "monto_productos",
+				"type": "decimal",
+				"precision": 10,
+				"scale": 2
+			},
+			{
+				"name": "tipo_subsidio",
+				"type": "varchar"
+			},
+			{
+				"name": "estado",
+				"type": "varchar"
+			}
+		],
+		"typeProperties": {
+			"schema": "silver",
+			"table": "tbl_spl_asignaciones"
+		}
+	}
+}

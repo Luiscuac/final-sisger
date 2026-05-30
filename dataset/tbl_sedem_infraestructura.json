@@ -1,0 +1,53 @@
+{
+	"name": "tbl_sedem_infraestructura",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "dw_subsiduios",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "silver"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "planta_id",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "empresa_sigla",
+				"type": "varchar"
+			},
+			{
+				"name": "empresa_nombre",
+				"type": "varchar"
+			},
+			{
+				"name": "planta_nombre",
+				"type": "varchar"
+			},
+			{
+				"name": "tipo_planta",
+				"type": "varchar"
+			},
+			{
+				"name": "municipio",
+				"type": "varchar"
+			},
+			{
+				"name": "departamento",
+				"type": "varchar"
+			},
+			{
+				"name": "estado_operativo",
+				"type": "varchar"
+			}
+		],
+		"typeProperties": {
+			"schema": "silver",
+			"table": "tbl_sedem_infraestructura"
+		}
+	}
+}

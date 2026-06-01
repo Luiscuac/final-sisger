@@ -1,0 +1,265 @@
+{
+	"name": "df_silver_agencia_logistica",
+	"properties": {
+		"folder": {
+			"name": "silver"
+		},
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "almacenes_csv",
+						"type": "DatasetReference"
+					},
+					"name": "almacenes"
+				},
+				{
+					"dataset": {
+						"referenceName": "recepciones_csv",
+						"type": "DatasetReference"
+					},
+					"name": "recepciones"
+				},
+				{
+					"dataset": {
+						"referenceName": "despachos_csv",
+						"type": "DatasetReference"
+					},
+					"name": "despachos"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "tbl_agencia_almacenes",
+						"type": "DatasetReference"
+					},
+					"name": "sink1"
+				},
+				{
+					"dataset": {
+						"referenceName": "tbl_agencia_recepciones",
+						"type": "DatasetReference"
+					},
+					"name": "sink2"
+				},
+				{
+					"dataset": {
+						"referenceName": "tbl_agencia_despachos",
+						"type": "DatasetReference"
+					},
+					"name": "sink3"
+				}
+			],
+			"transformations": [
+				{
+					"name": "select1"
+				},
+				{
+					"name": "derivedColumn1"
+				},
+				{
+					"name": "select2"
+				},
+				{
+					"name": "derivedColumn2"
+				},
+				{
+					"name": "select3"
+				},
+				{
+					"name": "derivedColumn3"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          almacen_id as string,",
+				"          nombre as string,",
+				"          municipio as string,",
+				"          departamento as string,",
+				"          direccion as string,",
+				"          capacidad_m3 as string,",
+				"          estado as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false) ~> almacenes",
+				"source(output(",
+				"          recepcion_id as string,",
+				"          nro_lote as string,",
+				"          almacen_id as string,",
+				"          transportista_id as string,",
+				"          vehiculo_id as string,",
+				"          fecha_recepcion as string,",
+				"          cantidad_recibida as string,",
+				"          unidad as string,",
+				"          condicion as string,",
+				"          estado as string,",
+				"          responsable as string,",
+				"          nro_guia_remision as string,",
+				"          temperatura_llegada as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false) ~> recepciones",
+				"source(output(",
+				"          despacho_id as string,",
+				"          recepcion_id as string,",
+				"          nro_lote as string,",
+				"          almacen_id as string,",
+				"          transportista_id as string,",
+				"          vehiculo_id as string,",
+				"          fecha_despacho as string,",
+				"          cantidad_despachada as string,",
+				"          centro_destino as string,",
+				"          estado as string,",
+				"          responsable as string,",
+				"          nro_guia_despacho as string,",
+				"          fecha_llegada as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false) ~> despachos",
+				"almacenes select(mapColumn(",
+				"          almacen_id,",
+				"          nombre,",
+				"          municipio,",
+				"          departamento,",
+				"          capacidad_m3",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> select1",
+				"select1 derive(almacen_id = toInteger(almacen_id),",
+				"          nombre = upper(trim(nombre)),",
+				"          municipio = upper(trim(municipio)),",
+				"          departamento = upper(trim(departamento)),",
+				"          capacidad_m3 = toDecimal(capacidad_m3, 10, 2)) ~> derivedColumn1",
+				"recepciones select(mapColumn(",
+				"          recepcion_id,",
+				"          nro_lote,",
+				"          almacen_id,",
+				"          fecha_recepcion,",
+				"          cantidad_recibida,",
+				"          condicion,",
+				"          estado",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> select2",
+				"select2 derive(recepcion_id = toInteger(recepcion_id),",
+				"          nro_lote = upper(trim(nro_lote)),",
+				"          almacen_id = toInteger(almacen_id),",
+				"          fecha_recepcion = toDate(fecha_recepcion, 'yyyy-MM-dd'),",
+				"          cantidad_recibida = toDecimal(cantidad_recibida, 18, 2),",
+				"          condicion = upper(trim(condicion)),",
+				"          estado = upper(trim(estado))) ~> derivedColumn2",
+				"despachos select(mapColumn(",
+				"          despacho_id,",
+				"          recepcion_id,",
+				"          nro_lote,",
+				"          almacen_id,",
+				"          fecha_despacho,",
+				"          cantidad_despachada,",
+				"          centro_destino,",
+				"          estado,",
+				"          fecha_llegada",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> select3",
+				"select3 derive(despacho_id = toInteger(despacho_id),",
+				"          recepcion_id = toInteger(recepcion_id),",
+				"          nro_lote = upper(trim(nro_lote)),",
+				"          almacen_id = toInteger(almacen_id),",
+				"          fecha_despacho = toDate(fecha_despacho, 'yyyy-MM-dd'),",
+				"          fecha_llegada = toDate(fecha_llegada, 'yyyy-MM-dd'),",
+				"          cantidad_despachada = toDecimal(cantidad_despachada, 18, 2),",
+				"          centro_destino = upper(trim(centro_destino)),",
+				"          estado = upper(trim(estado))) ~> derivedColumn3",
+				"derivedColumn1 sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          almacen_id as integer,",
+				"          nombre as string,",
+				"          municipio as string,",
+				"          departamento as string,",
+				"          capacidad_m3 as decimal(10,2)",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     mapColumn(",
+				"          almacen_id,",
+				"          nombre,",
+				"          municipio,",
+				"          departamento,",
+				"          capacidad_m3",
+				"     )) ~> sink1",
+				"derivedColumn2 sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          recepcion_id as integer,",
+				"          nro_lote as string,",
+				"          almacen_id as integer,",
+				"          fecha_recepcion as date,",
+				"          cantidad_recibida as decimal(18,2),",
+				"          condicion as string,",
+				"          estado as string",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     mapColumn(",
+				"          recepcion_id,",
+				"          nro_lote,",
+				"          almacen_id,",
+				"          fecha_recepcion,",
+				"          cantidad_recibida,",
+				"          condicion,",
+				"          estado",
+				"     )) ~> sink2",
+				"derivedColumn3 sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          despacho_id as integer,",
+				"          recepcion_id as integer,",
+				"          nro_lote as string,",
+				"          almacen_id as integer,",
+				"          fecha_despacho as date,",
+				"          fecha_llegada as date,",
+				"          cantidad_despachada as decimal(18,2),",
+				"          centro_destino as string,",
+				"          estado as string",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     mapColumn(",
+				"          despacho_id,",
+				"          recepcion_id,",
+				"          nro_lote,",
+				"          almacen_id,",
+				"          fecha_despacho,",
+				"          fecha_llegada,",
+				"          cantidad_despachada,",
+				"          centro_destino,",
+				"          estado",
+				"     )) ~> sink3"
+			]
+		}
+	}
+}

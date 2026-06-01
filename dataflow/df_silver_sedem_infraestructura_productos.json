@@ -1,0 +1,212 @@
+{
+	"name": "df_silver_sedem_infraestructura_productos",
+	"properties": {
+		"folder": {
+			"name": "silver"
+		},
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "sedem_empresas_csv",
+						"type": "DatasetReference"
+					},
+					"name": "source1"
+				},
+				{
+					"dataset": {
+						"referenceName": "sedem_productos_csv",
+						"type": "DatasetReference"
+					},
+					"name": "source2"
+				},
+				{
+					"dataset": {
+						"referenceName": "sedem_plantas_csv",
+						"type": "DatasetReference"
+					},
+					"name": "source3"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "tbl_sedem_infraestructura",
+						"type": "DatasetReference"
+					},
+					"name": "sink1"
+				},
+				{
+					"dataset": {
+						"referenceName": "tbl_sedem_productos",
+						"type": "DatasetReference"
+					},
+					"name": "sink2"
+				}
+			],
+			"transformations": [
+				{
+					"name": "join1"
+				},
+				{
+					"name": "select1"
+				},
+				{
+					"name": "derivedColumn1"
+				},
+				{
+					"name": "join2"
+				},
+				{
+					"name": "select2"
+				},
+				{
+					"name": "derivedColumn2"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          empresa_id as string,",
+				"          sigla as string,",
+				"          nombre as string,",
+				"          descripcion as string,",
+				"          nit as string,",
+				"          municipio as string,",
+				"          departamento as string,",
+				"          estado as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false) ~> source1",
+				"source(output(",
+				"          producto_id as string,",
+				"          empresa_id as string,",
+				"          nombre as string,",
+				"          categoria as string,",
+				"          presentacion as string,",
+				"          estado as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false) ~> source2",
+				"source(output(",
+				"          planta_id as string,",
+				"          empresa_id as string,",
+				"          nombre as string,",
+				"          municipio as string,",
+				"          departamento as string,",
+				"          tipo as string,",
+				"          estado as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false) ~> source3",
+				"source3, source1 join(source3@empresa_id == source1@empresa_id,",
+				"     joinType:'inner',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'auto')~> join1",
+				"join1 select(mapColumn(",
+				"          planta_id,",
+				"          planta_nombre = source3@nombre,",
+				"          municipio = source3@municipio,",
+				"          departamento = source3@departamento,",
+				"          tipo_planta = tipo,",
+				"          estado_operativo = source3@estado,",
+				"          empresa_sigla = sigla,",
+				"          empresa_nombre = source1@nombre",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> select1",
+				"select1 derive(empresa_sigla = upper(trim(empresa_sigla)),",
+				"          empresa_nombre = upper(trim(empresa_nombre)),",
+				"          planta_nombre = upper(trim(planta_nombre)),",
+				"          tipo_planta = upper(trim(tipo_planta)),",
+				"          municipio = upper(trim(municipio)),",
+				"          departamento = upper(trim(departamento)),",
+				"          estado_operativo = upper(trim(estado_operativo)),",
+				"          planta_id = toInteger(planta_id)) ~> derivedColumn1",
+				"source2, source1 join(source2@empresa_id == source1@empresa_id,",
+				"     joinType:'inner',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'auto')~> join2",
+				"join2 select(mapColumn(",
+				"          producto_id,",
+				"          nombre = source2@nombre,",
+				"          categoria,",
+				"          presentacion,",
+				"          estado = source2@estado,",
+				"          empresa_sigla = sigla",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> select2",
+				"select2 derive(empresa_sigla = upper(trim(empresa_sigla)),",
+				"          nombre = upper(trim(nombre)),",
+				"          categoria = upper(trim(categoria)),",
+				"          presentacion = upper(trim(presentacion)),",
+				"          estado = upper(trim(estado)),",
+				"          producto_id = toInteger(producto_id)) ~> derivedColumn2",
+				"derivedColumn1 sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          planta_id as integer,",
+				"          empresa_sigla as string,",
+				"          empresa_nombre as string,",
+				"          planta_nombre as string,",
+				"          tipo_planta as string,",
+				"          municipio as string,",
+				"          departamento as string,",
+				"          estado_operativo as string",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     truncate:true,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     mapColumn(",
+				"          planta_id,",
+				"          empresa_sigla,",
+				"          empresa_nombre,",
+				"          planta_nombre,",
+				"          tipo_planta,",
+				"          municipio,",
+				"          departamento,",
+				"          estado_operativo",
+				"     )) ~> sink1",
+				"derivedColumn2 sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          producto_id as integer,",
+				"          empresa_sigla as string,",
+				"          nombre as string,",
+				"          categoria as string,",
+				"          presentacion as string,",
+				"          estado as string",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     truncate:true,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     mapColumn(",
+				"          producto_id,",
+				"          empresa_sigla,",
+				"          nombre,",
+				"          categoria,",
+				"          presentacion,",
+				"          estado",
+				"     )) ~> sink2"
+			]
+		}
+	}
+}

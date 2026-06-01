@@ -1,0 +1,115 @@
+{
+	"name": "df_segip",
+	"properties": {
+		"folder": {
+			"name": "silver"
+		},
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "segip_personas_csv",
+						"type": "DatasetReference"
+					},
+					"name": "source1"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "tbl_segip_personas",
+						"type": "DatasetReference"
+					},
+					"name": "sink1"
+				}
+			],
+			"transformations": [
+				{
+					"name": "derivedColumn1"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          ci as string,",
+				"          nombres as string,",
+				"          apellido_paterno as string,",
+				"          apellido_materno as string,",
+				"          fecha_nacimiento as string,",
+				"          genero as string,",
+				"          estado_civil as string,",
+				"          ci_conyuge as string,",
+				"          numero_hijos as string,",
+				"          ci_padre as string,",
+				"          ci_madre as string,",
+				"          profesion as string,",
+				"          nivel_estudios as string,",
+				"          municipio_residencia as string,",
+				"          fecha_emision as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false) ~> source1",
+				"source1 derive(ci = upper(trim(ci)),",
+				"          nombres = upper(trim(nombres)),",
+				"          apellido_paterno = upper(trim(apellido_paterno)),",
+				"          apellido_materno = upper(trim(apellido_materno)),",
+				"          fecha_nacimiento = toDate(fecha_nacimiento, 'yyyy-MM-dd'),",
+				"          genero = upper(trim(genero)),",
+				"          estado_civil = upper(trim(estado_civil)),",
+				"          ci_conyuge = upper(trim(ci_conyuge)),",
+				"          numero_hijos = toInteger(numero_hijos),",
+				"          ci_padre = upper(trim(ci_padre)),",
+				"          ci_madre = upper(trim(ci_madre)),",
+				"          profesion = iif(isNull(profesion) || trim(profesion) == '', 'NO REGISTRADO', upper(trim(profesion))),",
+				"          nivel_estudios = upper(trim(nivel_estudios)),",
+				"          municipio_residencia = upper(trim(municipio_residencia)),",
+				"          fecha_emision = toDate(fecha_emision, 'yyyy-MM-dd')) ~> derivedColumn1",
+				"derivedColumn1 sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          ci as string,",
+				"          nombres as string,",
+				"          apellido_paterno as string,",
+				"          apellido_materno as string,",
+				"          fecha_nacimiento as date,",
+				"          genero as string,",
+				"          estado_civil as string,",
+				"          ci_conyuge as string,",
+				"          numero_hijos as integer,",
+				"          ci_padre as string,",
+				"          ci_madre as string,",
+				"          profesion as string,",
+				"          nivel_estudios as string,",
+				"          municipio_residencia as string,",
+				"          fecha_emision as date",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     mapColumn(",
+				"          ci,",
+				"          nombres,",
+				"          apellido_paterno,",
+				"          apellido_materno,",
+				"          fecha_nacimiento,",
+				"          genero,",
+				"          estado_civil,",
+				"          ci_conyuge,",
+				"          numero_hijos,",
+				"          ci_padre,",
+				"          ci_madre,",
+				"          profesion,",
+				"          nivel_estudios,",
+				"          municipio_residencia,",
+				"          fecha_emision",
+				"     )) ~> sink1"
+			]
+		}
+	}
+}

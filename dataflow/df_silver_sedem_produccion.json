@@ -1,0 +1,149 @@
+{
+	"name": "df_silver_sedem_produccion",
+	"properties": {
+		"folder": {
+			"name": "silver"
+		},
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "sedem_produccion_csv",
+						"type": "DatasetReference"
+					},
+					"name": "produccion"
+				},
+				{
+					"dataset": {
+						"referenceName": "sedem_inventario_csv",
+						"type": "DatasetReference"
+					},
+					"name": "inventario"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "tbl_sedem_produccion",
+						"type": "DatasetReference"
+					},
+					"name": "sink1"
+				}
+			],
+			"transformations": [
+				{
+					"name": "join1"
+				},
+				{
+					"name": "select1"
+				},
+				{
+					"name": "derivedColumn1"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          produccion_id as string,",
+				"          empresa_id as string,",
+				"          planta_id as string,",
+				"          producto_id as string,",
+				"          nro_lote as string,",
+				"          fecha_produccion as string,",
+				"          cantidad as string,",
+				"          unidad as string,",
+				"          turno as string,",
+				"          responsable as string,",
+				"          costo_produccion as string,",
+				"          estado as string,",
+				"          fecha_vencimiento as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false) ~> produccion",
+				"source(output(",
+				"          inventario_id as string,",
+				"          empresa_id as string,",
+				"          producto_id as string,",
+				"          nro_lote as string,",
+				"          cantidad_producida as string,",
+				"          cantidad_despachada as string,",
+				"          cantidad_disponible as string,",
+				"          estado as string,",
+				"          fecha_ultimo_movimiento as string,",
+				"          almacen as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false) ~> inventario",
+				"produccion, inventario join(produccion@nro_lote == inventario@nro_lote,",
+				"     joinType:'inner',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'auto')~> join1",
+				"join1 select(mapColumn(",
+				"          produccion_id,",
+				"          planta_id,",
+				"          producto_id = produccion@producto_id,",
+				"          nro_lote = produccion@nro_lote,",
+				"          fecha_produccion,",
+				"          cantidad_producida = cantidad,",
+				"          unidad,",
+				"          costo_produccion_bs = costo_produccion,",
+				"          fecha_vencimiento,",
+				"          cantidad_despachada,",
+				"          estado = inventario@estado",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> select1",
+				"select1 derive(produccion_id = toInteger(produccion_id),",
+				"          planta_id = toInteger(planta_id),",
+				"          producto_id = toInteger(producto_id),",
+				"          nro_lote = upper(trim(nro_lote)),",
+				"          fecha_produccion = toDate(fecha_produccion, 'yyyy-MM-dd'),",
+				"          fecha_vencimiento = toDate(fecha_vencimiento, 'yyyy-MM-dd'),",
+				"          cantidad_producida = toDecimal(cantidad_producida, 18, 2),",
+				"          cantidad_despachada = toDecimal(cantidad_despachada, 18, 2),",
+				"          costo_produccion_bs = toDecimal(costo_produccion_bs, 18, 2),",
+				"          unidad = upper(trim(unidad)),",
+				"          estado = upper(trim(estado))) ~> derivedColumn1",
+				"derivedColumn1 sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          produccion_id as integer,",
+				"          planta_id as integer,",
+				"          producto_id as integer,",
+				"          nro_lote as string,",
+				"          fecha_produccion as date,",
+				"          fecha_vencimiento as date,",
+				"          cantidad_producida as decimal(18,2),",
+				"          cantidad_despachada as decimal(18,2),",
+				"          costo_produccion_bs as decimal(18,2),",
+				"          unidad as string,",
+				"          estado as string",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     mapColumn(",
+				"          produccion_id,",
+				"          planta_id,",
+				"          producto_id,",
+				"          nro_lote,",
+				"          fecha_produccion,",
+				"          fecha_vencimiento,",
+				"          cantidad_producida,",
+				"          cantidad_despachada,",
+				"          costo_produccion_bs,",
+				"          unidad,",
+				"          estado",
+				"     )) ~> sink1"
+			]
+		}
+	}
+}

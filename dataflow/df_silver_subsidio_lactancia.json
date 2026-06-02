@@ -29,8 +29,39 @@
 					"name": "asignacionesmensuales"
 				}
 			],
-			"sinks": [],
-			"transformations": [],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "tbl_spl_empleadores",
+						"type": "DatasetReference"
+					},
+					"name": "sink1"
+				},
+				{
+					"dataset": {
+						"referenceName": "tbl_spl_asignaciones",
+						"type": "DatasetReference"
+					},
+					"name": "sink2"
+				}
+			],
+			"transformations": [
+				{
+					"name": "select1"
+				},
+				{
+					"name": "derivedColumn1"
+				},
+				{
+					"name": "join1"
+				},
+				{
+					"name": "select2"
+				},
+				{
+					"name": "derivedColumn2"
+				}
+			],
 			"scriptLines": [
 				"source(output(",
 				"          empleador_id as string,",
@@ -68,7 +99,100 @@
 				"     ),",
 				"     allowSchemaDrift: true,",
 				"     validateSchema: false,",
-				"     ignoreNoFilesFound: false) ~> asignacionesmensuales"
+				"     ignoreNoFilesFound: false) ~> asignacionesmensuales",
+				"empleadores select(mapColumn(",
+				"          empleador_id,",
+				"          razon_social,",
+				"          tipo,",
+				"          municipio",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> select1",
+				"select1 derive(empleador_id = toInteger(empleador_id),",
+				"          razon_social = upper(trim(razon_social)),",
+				"          tipo = upper(trim(tipo)),",
+				"          municipio = upper(trim(municipio))) ~> derivedColumn1",
+				"asignacionesmensuales, afiliaciones join(asignacionesmensuales@afiliacion_id == afiliaciones@afiliacion_id,",
+				"     joinType:'inner',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'auto')~> join1",
+				"join1 select(mapColumn(",
+				"          asignacion_id,",
+				"          mes,",
+				"          gestion,",
+				"          monto_bs,",
+				"          monto_productos,",
+				"          estado = asignacionesmensuales@estado,",
+				"          ci_beneficiaria,",
+				"          empleador_id,",
+				"          tipo_subsidio",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> select2",
+				"select2 derive(asignacion_id = toInteger(asignacion_id),",
+				"          ci_beneficiaria = upper(trim(ci_beneficiaria)),",
+				"          empleador_id = toInteger(empleador_id),",
+				"          mes = toInteger(mes),",
+				"          gestion = toInteger(gestion),",
+				"          monto_bs = toDecimal(monto_bs, 10, 2),",
+				"          monto_productos = toDecimal(monto_productos, 10, 2),",
+				"          tipo_subsidio = upper(trim(tipo_subsidio)),",
+				"          estado = upper(trim(estado))) ~> derivedColumn2",
+				"derivedColumn1 sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          empleador_id as integer,",
+				"          razon_social as string,",
+				"          tipo as string,",
+				"          municipio as string",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     mapColumn(",
+				"          empleador_id,",
+				"          razon_social,",
+				"          tipo,",
+				"          municipio",
+				"     )) ~> sink1",
+				"derivedColumn2 sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          asignacion_id as integer,",
+				"          ci_beneficiaria as string,",
+				"          empleador_id as integer,",
+				"          mes as integer,",
+				"          gestion as integer,",
+				"          monto_bs as decimal(10,2),",
+				"          monto_productos as decimal(10,2),",
+				"          tipo_subsidio as string,",
+				"          estado as string",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     mapColumn(",
+				"          asignacion_id,",
+				"          ci_beneficiaria,",
+				"          empleador_id,",
+				"          mes,",
+				"          gestion,",
+				"          monto_bs,",
+				"          monto_productos,",
+				"          tipo_subsidio,",
+				"          estado",
+				"     )) ~> sink2"
 			]
 		}
 	}

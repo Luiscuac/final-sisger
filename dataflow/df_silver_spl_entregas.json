@@ -1,0 +1,155 @@
+{
+	"name": "df_silver_spl_entregas",
+	"properties": {
+		"folder": {
+			"name": "silver"
+		},
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "spl_entrega_agencias_csv",
+						"type": "DatasetReference"
+					},
+					"name": "entregasagencias"
+				},
+				{
+					"dataset": {
+						"referenceName": "spl_entregas_supermercado_csv",
+						"type": "DatasetReference"
+					},
+					"name": "entregassupermercado"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "tbl_spl_entregas_agencia",
+						"type": "DatasetReference"
+					},
+					"name": "sink1"
+				},
+				{
+					"dataset": {
+						"referenceName": "tbl_spl_entregas_supermercado",
+						"type": "DatasetReference"
+					},
+					"name": "sink2"
+				}
+			],
+			"transformations": [
+				{
+					"name": "derivedColumn1"
+				},
+				{
+					"name": "derivedColumn2"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          entrega_ag_id as string,",
+				"          asignacion_id as string,",
+				"          ci_beneficiaria as string,",
+				"          fecha_entrega as string,",
+				"          productos as string,",
+				"          lote as string,",
+				"          peso_kg as string,",
+				"          punto_entrega as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false) ~> entregasagencias",
+				"source(output(",
+				"          entrega_super_id as string,",
+				"          asignacion_id as string,",
+				"          ci_beneficiaria as string,",
+				"          supermercado_id as string,",
+				"          fecha_retiro as string,",
+				"          tipo_carne as string,",
+				"          cantidad_kg as string,",
+				"          monto_bs as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false) ~> entregassupermercado",
+				"entregasagencias derive(entrega_ag_id = toInteger(entrega_ag_id),",
+				"          asignacion_id = toInteger(asignacion_id),",
+				"          ci_beneficiaria = upper(trim(ci_beneficiaria)),",
+				"          fecha_entrega = toDate(fecha_entrega, 'yyyy-MM-dd'),",
+				"          productos = upper(trim(productos)),",
+				"          lote = upper(trim(lote)),",
+				"          peso_kg = toDecimal(peso_kg, 10, 2),",
+				"          punto_entrega = upper(trim(punto_entrega))) ~> derivedColumn1",
+				"entregassupermercado derive(entrega_super_id = toInteger(entrega_super_id),",
+				"          asignacion_id = toInteger(asignacion_id),",
+				"          ci_beneficiaria = upper(trim(ci_beneficiaria)),",
+				"          supermercado_id = toInteger(supermercado_id),",
+				"          fecha_retiro = toDate(fecha_retiro, 'yyyy-MM-dd'),",
+				"          tipo_carne = upper(trim(tipo_carne)),",
+				"          cantidad_kg = toDecimal(cantidad_kg, 10, 2),",
+				"          monto_bs = toDecimal(monto_bs, 10, 2)) ~> derivedColumn2",
+				"derivedColumn1 sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          entrega_ag_id as integer,",
+				"          asignacion_id as integer,",
+				"          ci_beneficiaria as string,",
+				"          fecha_entrega as date,",
+				"          productos as string,",
+				"          lote as string,",
+				"          peso_kg as decimal(10,2),",
+				"          punto_entrega as string",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     mapColumn(",
+				"          entrega_ag_id,",
+				"          asignacion_id,",
+				"          ci_beneficiaria,",
+				"          fecha_entrega,",
+				"          productos,",
+				"          lote,",
+				"          peso_kg,",
+				"          punto_entrega",
+				"     )) ~> sink1",
+				"derivedColumn2 sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          entrega_super_id as integer,",
+				"          asignacion_id as integer,",
+				"          ci_beneficiaria as string,",
+				"          supermercado_id as integer,",
+				"          fecha_retiro as date,",
+				"          tipo_carne as string,",
+				"          cantidad_kg as decimal(10,2),",
+				"          monto_bs as decimal(10,2)",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     mapColumn(",
+				"          entrega_super_id,",
+				"          asignacion_id,",
+				"          ci_beneficiaria,",
+				"          supermercado_id,",
+				"          fecha_retiro,",
+				"          tipo_carne,",
+				"          cantidad_kg,",
+				"          monto_bs",
+				"     )) ~> sink2"
+			]
+		}
+	}
+}

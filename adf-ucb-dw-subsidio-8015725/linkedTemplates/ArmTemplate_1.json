@@ -1,0 +1,1182 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Nombre de instancia de Data Factory",
+			"defaultValue": "adf-ucb-dw-subsidio-8015725"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/spl_certificados_medicos_csv')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "datalake_subsidios",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "bronze"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"fileName": "spl_certificados_medicos.csv",
+						"folderPath": "subsidio prenatal y de lactancia",
+						"container": "bronze"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": [
+					{
+						"name": "certificado_id",
+						"type": "String"
+					},
+					{
+						"name": "afiliacion_id",
+						"type": "String"
+					},
+					{
+						"name": "fecha_emision",
+						"type": "String"
+					},
+					{
+						"name": "semana_gestacion",
+						"type": "String"
+					},
+					{
+						"name": "fecha_probable_parto",
+						"type": "String"
+					},
+					{
+						"name": "medico_responsable",
+						"type": "String"
+					},
+					{
+						"name": "estado",
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/spl_empleadores_csv')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "datalake_subsidios",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "bronze"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"fileName": "spl_empleadores.csv",
+						"folderPath": "subsidio prenatal y de lactancia",
+						"container": "bronze"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": [
+					{
+						"name": "empleador_id",
+						"type": "String"
+					},
+					{
+						"name": "nit",
+						"type": "String"
+					},
+					{
+						"name": "razon_social",
+						"type": "String"
+					},
+					{
+						"name": "tipo",
+						"type": "String"
+					},
+					{
+						"name": "nro_patronal",
+						"type": "String"
+					},
+					{
+						"name": "municipio",
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/spl_entrega_agencias_csv')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "datalake_subsidios",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "bronze"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"fileName": "spl_entregas_agencia.csv",
+						"folderPath": "subsidio prenatal y de lactancia",
+						"container": "bronze"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": [
+					{
+						"name": "entrega_ag_id",
+						"type": "String"
+					},
+					{
+						"name": "asignacion_id",
+						"type": "String"
+					},
+					{
+						"name": "ci_beneficiaria",
+						"type": "String"
+					},
+					{
+						"name": "fecha_entrega",
+						"type": "String"
+					},
+					{
+						"name": "productos",
+						"type": "String"
+					},
+					{
+						"name": "lote",
+						"type": "String"
+					},
+					{
+						"name": "peso_kg",
+						"type": "String"
+					},
+					{
+						"name": "punto_entrega",
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/spl_entregas_supermercado_csv')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "datalake_subsidios",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "bronze"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"fileName": "spl_entregas_supermercado (1).csv",
+						"folderPath": "subsidio prenatal y de lactancia",
+						"container": "bronze"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": [
+					{
+						"name": "entrega_super_id",
+						"type": "String"
+					},
+					{
+						"name": "asignacion_id",
+						"type": "String"
+					},
+					{
+						"name": "ci_beneficiaria",
+						"type": "String"
+					},
+					{
+						"name": "supermercado_id",
+						"type": "String"
+					},
+					{
+						"name": "fecha_retiro",
+						"type": "String"
+					},
+					{
+						"name": "tipo_carne",
+						"type": "String"
+					},
+					{
+						"name": "cantidad_kg",
+						"type": "String"
+					},
+					{
+						"name": "monto_bs",
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/tbl_agencia_almacenes')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "dw_subsiduios",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "silver"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "almacen_id",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "nombre",
+						"type": "varchar"
+					},
+					{
+						"name": "municipio",
+						"type": "varchar"
+					},
+					{
+						"name": "departamento",
+						"type": "varchar"
+					},
+					{
+						"name": "capacidad_m3",
+						"type": "decimal",
+						"precision": 10,
+						"scale": 2
+					}
+				],
+				"typeProperties": {
+					"schema": "silver",
+					"table": "tbl_agencia_almacenes"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/tbl_agencia_despachos')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "dw_subsiduios",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "silver"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "despacho_id",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "recepcion_id",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "nro_lote",
+						"type": "varchar"
+					},
+					{
+						"name": "almacen_id",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "fecha_despacho",
+						"type": "date"
+					},
+					{
+						"name": "fecha_llegada",
+						"type": "date"
+					},
+					{
+						"name": "cantidad_despachada",
+						"type": "decimal",
+						"precision": 18,
+						"scale": 2
+					},
+					{
+						"name": "centro_destino",
+						"type": "varchar"
+					},
+					{
+						"name": "estado",
+						"type": "varchar"
+					}
+				],
+				"typeProperties": {
+					"schema": "silver",
+					"table": "tbl_agencia_despachos"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/tbl_agencia_recepciones')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "dw_subsiduios",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "silver"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "recepcion_id",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "nro_lote",
+						"type": "varchar"
+					},
+					{
+						"name": "almacen_id",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "fecha_recepcion",
+						"type": "date"
+					},
+					{
+						"name": "cantidad_recibida",
+						"type": "decimal",
+						"precision": 18,
+						"scale": 2
+					},
+					{
+						"name": "condicion",
+						"type": "varchar"
+					},
+					{
+						"name": "estado",
+						"type": "varchar"
+					}
+				],
+				"typeProperties": {
+					"schema": "silver",
+					"table": "tbl_agencia_recepciones"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/tbl_sedem_infraestructura')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "dw_subsiduios",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "silver"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "planta_id",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "empresa_sigla",
+						"type": "varchar"
+					},
+					{
+						"name": "empresa_nombre",
+						"type": "varchar"
+					},
+					{
+						"name": "planta_nombre",
+						"type": "varchar"
+					},
+					{
+						"name": "tipo_planta",
+						"type": "varchar"
+					},
+					{
+						"name": "municipio",
+						"type": "varchar"
+					},
+					{
+						"name": "departamento",
+						"type": "varchar"
+					},
+					{
+						"name": "estado_operativo",
+						"type": "varchar"
+					}
+				],
+				"typeProperties": {
+					"schema": "silver",
+					"table": "tbl_sedem_infraestructura"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/tbl_sedem_produccion')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "dw_subsiduios",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "silver"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "produccion_id",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "planta_id",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "producto_id",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "nro_lote",
+						"type": "varchar"
+					},
+					{
+						"name": "fecha_produccion",
+						"type": "date"
+					},
+					{
+						"name": "fecha_vencimiento",
+						"type": "date"
+					},
+					{
+						"name": "cantidad_producida",
+						"type": "decimal",
+						"precision": 18,
+						"scale": 2
+					},
+					{
+						"name": "cantidad_despachada",
+						"type": "decimal",
+						"precision": 18,
+						"scale": 2
+					},
+					{
+						"name": "costo_produccion_bs",
+						"type": "decimal",
+						"precision": 18,
+						"scale": 2
+					},
+					{
+						"name": "unidad",
+						"type": "varchar"
+					},
+					{
+						"name": "estado",
+						"type": "varchar"
+					}
+				],
+				"typeProperties": {
+					"schema": "silver",
+					"table": "tbl_sedem_produccion"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/tbl_sedem_productos')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "dw_subsiduios",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "silver"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "producto_id",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "empresa_sigla",
+						"type": "varchar"
+					},
+					{
+						"name": "nombre",
+						"type": "varchar"
+					},
+					{
+						"name": "categoria",
+						"type": "varchar"
+					},
+					{
+						"name": "presentacion",
+						"type": "varchar"
+					},
+					{
+						"name": "estado",
+						"type": "varchar"
+					}
+				],
+				"typeProperties": {
+					"schema": "silver",
+					"table": "tbl_sedem_productos"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/tbl_segip_personas')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "dw_subsiduios",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "silver"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "ci",
+						"type": "varchar"
+					},
+					{
+						"name": "nombres",
+						"type": "varchar"
+					},
+					{
+						"name": "apellido_paterno",
+						"type": "varchar"
+					},
+					{
+						"name": "apellido_materno",
+						"type": "varchar"
+					},
+					{
+						"name": "fecha_nacimiento",
+						"type": "date"
+					},
+					{
+						"name": "genero",
+						"type": "varchar"
+					},
+					{
+						"name": "estado_civil",
+						"type": "varchar"
+					},
+					{
+						"name": "ci_conyuge",
+						"type": "varchar"
+					},
+					{
+						"name": "numero_hijos",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "ci_padre",
+						"type": "varchar"
+					},
+					{
+						"name": "ci_madre",
+						"type": "varchar"
+					},
+					{
+						"name": "profesion",
+						"type": "varchar"
+					},
+					{
+						"name": "nivel_estudios",
+						"type": "varchar"
+					},
+					{
+						"name": "municipio_residencia",
+						"type": "varchar"
+					},
+					{
+						"name": "fecha_emision",
+						"type": "date"
+					}
+				],
+				"typeProperties": {
+					"schema": "silver",
+					"table": "tbl_segip_personas"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/tbl_spl_asignaciones')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "dw_subsiduios",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "silver"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "asignacion_id",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "ci_beneficiaria",
+						"type": "varchar"
+					},
+					{
+						"name": "empleador_id",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "mes",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "gestion",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "monto_bs",
+						"type": "decimal",
+						"precision": 10,
+						"scale": 2
+					},
+					{
+						"name": "monto_productos",
+						"type": "decimal",
+						"precision": 10,
+						"scale": 2
+					},
+					{
+						"name": "tipo_subsidio",
+						"type": "varchar"
+					},
+					{
+						"name": "estado",
+						"type": "varchar"
+					}
+				],
+				"typeProperties": {
+					"schema": "silver",
+					"table": "tbl_spl_asignaciones"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/tbl_spl_empleadores')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "dw_subsiduios",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "silver"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "empleador_id",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "razon_social",
+						"type": "varchar"
+					},
+					{
+						"name": "tipo",
+						"type": "varchar"
+					},
+					{
+						"name": "municipio",
+						"type": "varchar"
+					}
+				],
+				"typeProperties": {
+					"schema": "silver",
+					"table": "tbl_spl_empleadores"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/tbl_spl_entregas_agencia')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "dw_subsiduios",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "silver"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "entrega_ag_id",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "asignacion_id",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "ci_beneficiaria",
+						"type": "varchar"
+					},
+					{
+						"name": "fecha_entrega",
+						"type": "date"
+					},
+					{
+						"name": "productos",
+						"type": "varchar"
+					},
+					{
+						"name": "lote",
+						"type": "varchar"
+					},
+					{
+						"name": "peso_kg",
+						"type": "decimal",
+						"precision": 10,
+						"scale": 2
+					},
+					{
+						"name": "punto_entrega",
+						"type": "varchar"
+					}
+				],
+				"typeProperties": {
+					"schema": "silver",
+					"table": "tbl_spl_entregas_agencia"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/tbl_spl_entregas_supermercado')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "dw_subsiduios",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "silver"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "entrega_super_id",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "asignacion_id",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "ci_beneficiaria",
+						"type": "varchar"
+					},
+					{
+						"name": "supermercado_id",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "fecha_retiro",
+						"type": "date"
+					},
+					{
+						"name": "tipo_carne",
+						"type": "varchar"
+					},
+					{
+						"name": "cantidad_kg",
+						"type": "decimal",
+						"precision": 10,
+						"scale": 2
+					},
+					{
+						"name": "monto_bs",
+						"type": "decimal",
+						"precision": 10,
+						"scale": 2
+					}
+				],
+				"typeProperties": {
+					"schema": "silver",
+					"table": "tbl_spl_entregas_supermercado"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/tbl_sup_entregas')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "dw_subsiduios",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "silver"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "entrega_id",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "boleta_id",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "ci_beneficiaria",
+						"type": "varchar"
+					},
+					{
+						"name": "establecimiento_id",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "paquete_id",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "lote_produccion",
+						"type": "varchar"
+					},
+					{
+						"name": "fecha_emision_boleta",
+						"type": "date"
+					},
+					{
+						"name": "fecha_entrega",
+						"type": "date"
+					},
+					{
+						"name": "estado",
+						"type": "varchar"
+					}
+				],
+				"typeProperties": {
+					"schema": "silver",
+					"table": "tbl_sup_entregas"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/tbl_sup_establecimientos')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "dw_subsiduios",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "silver"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "establecimiento_id",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "nombre",
+						"type": "varchar"
+					},
+					{
+						"name": "tipo",
+						"type": "varchar"
+					},
+					{
+						"name": "municipio",
+						"type": "varchar"
+					},
+					{
+						"name": "departamento",
+						"type": "varchar"
+					}
+				],
+				"typeProperties": {
+					"schema": "silver",
+					"table": "tbl_sup_establecimientos"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/tbl_sup_paquetes')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "dw_subsiduios",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "silver"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "paquete_id",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "nombre",
+						"type": "varchar"
+					},
+					{
+						"name": "peso_estandar_kg",
+						"type": "decimal",
+						"precision": 10,
+						"scale": 2
+					},
+					{
+						"name": "costo_estimado_bs",
+						"type": "decimal",
+						"precision": 10,
+						"scale": 2
+					}
+				],
+				"typeProperties": {
+					"schema": "silver",
+					"table": "tbl_sup_paquetes"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/transportistas_csv')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "datalake_subsidios",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "bronze"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"fileName": "transportistas.csv",
+						"folderPath": "agencia distribuidora sedem",
+						"container": "bronze"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": [
+					{
+						"name": "transportista_id",
+						"type": "String"
+					},
+					{
+						"name": "razon_social",
+						"type": "String"
+					},
+					{
+						"name": "nit",
+						"type": "String"
+					},
+					{
+						"name": "municipio",
+						"type": "String"
+					},
+					{
+						"name": "contacto",
+						"type": "String"
+					},
+					{
+						"name": "telefono",
+						"type": "String"
+					},
+					{
+						"name": "estado",
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/vehiculos_csv')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "datalake_subsidios",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "bronze"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"fileName": "vehiculos.csv",
+						"folderPath": "agencia distribuidora sedem",
+						"container": "bronze"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": [
+					{
+						"name": "vehiculo_id",
+						"type": "String"
+					},
+					{
+						"name": "transportista_id",
+						"type": "String"
+					},
+					{
+						"name": "descripcion",
+						"type": "String"
+					},
+					{
+						"name": "placa",
+						"type": "String"
+					},
+					{
+						"name": "tipo",
+						"type": "String"
+					},
+					{
+						"name": "capacidad_kg",
+						"type": "String"
+					},
+					{
+						"name": "estado",
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": []
+		}
+	]
+}

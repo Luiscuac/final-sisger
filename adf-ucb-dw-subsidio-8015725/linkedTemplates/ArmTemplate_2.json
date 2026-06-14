@@ -1,0 +1,1694 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Nombre de instancia de Data Factory",
+			"defaultValue": "adf-ucb-dw-subsidio-8015725"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/df_silver_agencia_logistica')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"folder": {
+					"name": "silver"
+				},
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "almacenes_csv",
+								"type": "DatasetReference"
+							},
+							"name": "almacenes"
+						},
+						{
+							"dataset": {
+								"referenceName": "recepciones_csv",
+								"type": "DatasetReference"
+							},
+							"name": "recepciones"
+						},
+						{
+							"dataset": {
+								"referenceName": "despachos_csv",
+								"type": "DatasetReference"
+							},
+							"name": "despachos"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "tbl_agencia_almacenes",
+								"type": "DatasetReference"
+							},
+							"name": "sink1"
+						},
+						{
+							"dataset": {
+								"referenceName": "tbl_agencia_recepciones",
+								"type": "DatasetReference"
+							},
+							"name": "sink2"
+						},
+						{
+							"dataset": {
+								"referenceName": "tbl_agencia_despachos",
+								"type": "DatasetReference"
+							},
+							"name": "sink3"
+						}
+					],
+					"transformations": [
+						{
+							"name": "select1"
+						},
+						{
+							"name": "derivedColumn1"
+						},
+						{
+							"name": "select2"
+						},
+						{
+							"name": "derivedColumn2"
+						},
+						{
+							"name": "select3"
+						},
+						{
+							"name": "derivedColumn3"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          almacen_id as string,",
+						"          nombre as string,",
+						"          municipio as string,",
+						"          departamento as string,",
+						"          direccion as string,",
+						"          capacidad_m3 as string,",
+						"          estado as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false) ~> almacenes",
+						"source(output(",
+						"          recepcion_id as string,",
+						"          nro_lote as string,",
+						"          almacen_id as string,",
+						"          transportista_id as string,",
+						"          vehiculo_id as string,",
+						"          fecha_recepcion as string,",
+						"          cantidad_recibida as string,",
+						"          unidad as string,",
+						"          condicion as string,",
+						"          estado as string,",
+						"          responsable as string,",
+						"          nro_guia_remision as string,",
+						"          temperatura_llegada as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false) ~> recepciones",
+						"source(output(",
+						"          despacho_id as string,",
+						"          recepcion_id as string,",
+						"          nro_lote as string,",
+						"          almacen_id as string,",
+						"          transportista_id as string,",
+						"          vehiculo_id as string,",
+						"          fecha_despacho as string,",
+						"          cantidad_despachada as string,",
+						"          centro_destino as string,",
+						"          estado as string,",
+						"          responsable as string,",
+						"          nro_guia_despacho as string,",
+						"          fecha_llegada as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false) ~> despachos",
+						"almacenes select(mapColumn(",
+						"          almacen_id,",
+						"          nombre,",
+						"          municipio,",
+						"          departamento,",
+						"          capacidad_m3",
+						"     ),",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> select1",
+						"select1 derive(almacen_id = toInteger(almacen_id),",
+						"          nombre = upper(trim(nombre)),",
+						"          municipio = upper(trim(municipio)),",
+						"          departamento = upper(trim(departamento)),",
+						"          capacidad_m3 = toDecimal(capacidad_m3, 10, 2)) ~> derivedColumn1",
+						"recepciones select(mapColumn(",
+						"          recepcion_id,",
+						"          nro_lote,",
+						"          almacen_id,",
+						"          fecha_recepcion,",
+						"          cantidad_recibida,",
+						"          condicion,",
+						"          estado",
+						"     ),",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> select2",
+						"select2 derive(recepcion_id = toInteger(recepcion_id),",
+						"          nro_lote = upper(trim(nro_lote)),",
+						"          almacen_id = toInteger(almacen_id),",
+						"          fecha_recepcion = toDate(fecha_recepcion, 'yyyy-MM-dd'),",
+						"          cantidad_recibida = toDecimal(cantidad_recibida, 18, 2),",
+						"          condicion = upper(trim(condicion)),",
+						"          estado = upper(trim(estado))) ~> derivedColumn2",
+						"despachos select(mapColumn(",
+						"          despacho_id,",
+						"          recepcion_id,",
+						"          nro_lote,",
+						"          almacen_id,",
+						"          fecha_despacho,",
+						"          cantidad_despachada,",
+						"          centro_destino,",
+						"          estado,",
+						"          fecha_llegada",
+						"     ),",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> select3",
+						"select3 derive(despacho_id = toInteger(despacho_id),",
+						"          recepcion_id = toInteger(recepcion_id),",
+						"          nro_lote = upper(trim(nro_lote)),",
+						"          almacen_id = toInteger(almacen_id),",
+						"          fecha_despacho = toDate(fecha_despacho, 'yyyy-MM-dd'),",
+						"          fecha_llegada = toDate(fecha_llegada, 'yyyy-MM-dd'),",
+						"          cantidad_despachada = toDecimal(cantidad_despachada, 18, 2),",
+						"          centro_destino = upper(trim(centro_destino)),",
+						"          estado = upper(trim(estado))) ~> derivedColumn3",
+						"derivedColumn1 sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     input(",
+						"          almacen_id as integer,",
+						"          nombre as string,",
+						"          municipio as string,",
+						"          departamento as string,",
+						"          capacidad_m3 as decimal(10,2)",
+						"     ),",
+						"     deletable:false,",
+						"     insertable:true,",
+						"     updateable:false,",
+						"     upsertable:false,",
+						"     format: 'table',",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     errorHandlingOption: 'stopOnFirstError',",
+						"     mapColumn(",
+						"          almacen_id,",
+						"          nombre,",
+						"          municipio,",
+						"          departamento,",
+						"          capacidad_m3",
+						"     )) ~> sink1",
+						"derivedColumn2 sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     input(",
+						"          recepcion_id as integer,",
+						"          nro_lote as string,",
+						"          almacen_id as integer,",
+						"          fecha_recepcion as date,",
+						"          cantidad_recibida as decimal(18,2),",
+						"          condicion as string,",
+						"          estado as string",
+						"     ),",
+						"     deletable:false,",
+						"     insertable:true,",
+						"     updateable:false,",
+						"     upsertable:false,",
+						"     format: 'table',",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     errorHandlingOption: 'stopOnFirstError',",
+						"     mapColumn(",
+						"          recepcion_id,",
+						"          nro_lote,",
+						"          almacen_id,",
+						"          fecha_recepcion,",
+						"          cantidad_recibida,",
+						"          condicion,",
+						"          estado",
+						"     )) ~> sink2",
+						"derivedColumn3 sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     input(",
+						"          despacho_id as integer,",
+						"          recepcion_id as integer,",
+						"          nro_lote as string,",
+						"          almacen_id as integer,",
+						"          fecha_despacho as date,",
+						"          fecha_llegada as date,",
+						"          cantidad_despachada as decimal(18,2),",
+						"          centro_destino as string,",
+						"          estado as string",
+						"     ),",
+						"     deletable:false,",
+						"     insertable:true,",
+						"     updateable:false,",
+						"     upsertable:false,",
+						"     format: 'table',",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     errorHandlingOption: 'stopOnFirstError',",
+						"     mapColumn(",
+						"          despacho_id,",
+						"          recepcion_id,",
+						"          nro_lote,",
+						"          almacen_id,",
+						"          fecha_despacho,",
+						"          fecha_llegada,",
+						"          cantidad_despachada,",
+						"          centro_destino,",
+						"          estado",
+						"     )) ~> sink3"
+					]
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/df_silver_sedem_infraestructura_productos')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"folder": {
+					"name": "silver"
+				},
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "sedem_empresas_csv",
+								"type": "DatasetReference"
+							},
+							"name": "source1"
+						},
+						{
+							"dataset": {
+								"referenceName": "sedem_productos_csv",
+								"type": "DatasetReference"
+							},
+							"name": "source2"
+						},
+						{
+							"dataset": {
+								"referenceName": "sedem_plantas_csv",
+								"type": "DatasetReference"
+							},
+							"name": "source3"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "tbl_sedem_infraestructura",
+								"type": "DatasetReference"
+							},
+							"name": "sink1"
+						},
+						{
+							"dataset": {
+								"referenceName": "tbl_sedem_productos",
+								"type": "DatasetReference"
+							},
+							"name": "sink2"
+						}
+					],
+					"transformations": [
+						{
+							"name": "join1"
+						},
+						{
+							"name": "select1"
+						},
+						{
+							"name": "derivedColumn1"
+						},
+						{
+							"name": "join2"
+						},
+						{
+							"name": "select2"
+						},
+						{
+							"name": "derivedColumn2"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          empresa_id as string,",
+						"          sigla as string,",
+						"          nombre as string,",
+						"          descripcion as string,",
+						"          nit as string,",
+						"          municipio as string,",
+						"          departamento as string,",
+						"          estado as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false) ~> source1",
+						"source(output(",
+						"          producto_id as string,",
+						"          empresa_id as string,",
+						"          nombre as string,",
+						"          categoria as string,",
+						"          presentacion as string,",
+						"          estado as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false) ~> source2",
+						"source(output(",
+						"          planta_id as string,",
+						"          empresa_id as string,",
+						"          nombre as string,",
+						"          municipio as string,",
+						"          departamento as string,",
+						"          tipo as string,",
+						"          estado as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false) ~> source3",
+						"source3, source1 join(source3@empresa_id == source1@empresa_id,",
+						"     joinType:'inner',",
+						"     matchType:'exact',",
+						"     ignoreSpaces: false,",
+						"     broadcast: 'auto')~> join1",
+						"join1 select(mapColumn(",
+						"          planta_id,",
+						"          planta_nombre = source3@nombre,",
+						"          municipio = source3@municipio,",
+						"          departamento = source3@departamento,",
+						"          tipo_planta = tipo,",
+						"          estado_operativo = source3@estado,",
+						"          empresa_sigla = sigla,",
+						"          empresa_nombre = source1@nombre",
+						"     ),",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> select1",
+						"select1 derive(empresa_sigla = upper(trim(empresa_sigla)),",
+						"          empresa_nombre = upper(trim(empresa_nombre)),",
+						"          planta_nombre = upper(trim(planta_nombre)),",
+						"          tipo_planta = upper(trim(tipo_planta)),",
+						"          municipio = upper(trim(municipio)),",
+						"          departamento = upper(trim(departamento)),",
+						"          estado_operativo = upper(trim(estado_operativo)),",
+						"          planta_id = toInteger(planta_id)) ~> derivedColumn1",
+						"source2, source1 join(source2@empresa_id == source1@empresa_id,",
+						"     joinType:'inner',",
+						"     matchType:'exact',",
+						"     ignoreSpaces: false,",
+						"     broadcast: 'auto')~> join2",
+						"join2 select(mapColumn(",
+						"          producto_id,",
+						"          nombre = source2@nombre,",
+						"          categoria,",
+						"          presentacion,",
+						"          estado = source2@estado,",
+						"          empresa_sigla = sigla",
+						"     ),",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> select2",
+						"select2 derive(empresa_sigla = upper(trim(empresa_sigla)),",
+						"          nombre = upper(trim(nombre)),",
+						"          categoria = upper(trim(categoria)),",
+						"          presentacion = upper(trim(presentacion)),",
+						"          estado = upper(trim(estado)),",
+						"          producto_id = toInteger(producto_id)) ~> derivedColumn2",
+						"derivedColumn1 sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     input(",
+						"          planta_id as integer,",
+						"          empresa_sigla as string,",
+						"          empresa_nombre as string,",
+						"          planta_nombre as string,",
+						"          tipo_planta as string,",
+						"          municipio as string,",
+						"          departamento as string,",
+						"          estado_operativo as string",
+						"     ),",
+						"     deletable:false,",
+						"     insertable:true,",
+						"     updateable:false,",
+						"     upsertable:false,",
+						"     truncate:true,",
+						"     format: 'table',",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     errorHandlingOption: 'stopOnFirstError',",
+						"     mapColumn(",
+						"          planta_id,",
+						"          empresa_sigla,",
+						"          empresa_nombre,",
+						"          planta_nombre,",
+						"          tipo_planta,",
+						"          municipio,",
+						"          departamento,",
+						"          estado_operativo",
+						"     )) ~> sink1",
+						"derivedColumn2 sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     input(",
+						"          producto_id as integer,",
+						"          empresa_sigla as string,",
+						"          nombre as string,",
+						"          categoria as string,",
+						"          presentacion as string,",
+						"          estado as string",
+						"     ),",
+						"     deletable:false,",
+						"     insertable:true,",
+						"     updateable:false,",
+						"     upsertable:false,",
+						"     truncate:true,",
+						"     format: 'table',",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     errorHandlingOption: 'stopOnFirstError',",
+						"     mapColumn(",
+						"          producto_id,",
+						"          empresa_sigla,",
+						"          nombre,",
+						"          categoria,",
+						"          presentacion,",
+						"          estado",
+						"     )) ~> sink2"
+					]
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/df_silver_sedem_produccion')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"folder": {
+					"name": "silver"
+				},
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "sedem_produccion_csv",
+								"type": "DatasetReference"
+							},
+							"name": "produccion"
+						},
+						{
+							"dataset": {
+								"referenceName": "sedem_inventario_csv",
+								"type": "DatasetReference"
+							},
+							"name": "inventario"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "tbl_sedem_produccion",
+								"type": "DatasetReference"
+							},
+							"name": "sink1"
+						}
+					],
+					"transformations": [
+						{
+							"name": "join1"
+						},
+						{
+							"name": "select1"
+						},
+						{
+							"name": "derivedColumn1"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          produccion_id as string,",
+						"          empresa_id as string,",
+						"          planta_id as string,",
+						"          producto_id as string,",
+						"          nro_lote as string,",
+						"          fecha_produccion as string,",
+						"          cantidad as string,",
+						"          unidad as string,",
+						"          turno as string,",
+						"          responsable as string,",
+						"          costo_produccion as string,",
+						"          estado as string,",
+						"          fecha_vencimiento as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false) ~> produccion",
+						"source(output(",
+						"          inventario_id as string,",
+						"          empresa_id as string,",
+						"          producto_id as string,",
+						"          nro_lote as string,",
+						"          cantidad_producida as string,",
+						"          cantidad_despachada as string,",
+						"          cantidad_disponible as string,",
+						"          estado as string,",
+						"          fecha_ultimo_movimiento as string,",
+						"          almacen as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false) ~> inventario",
+						"produccion, inventario join(produccion@nro_lote == inventario@nro_lote,",
+						"     joinType:'inner',",
+						"     matchType:'exact',",
+						"     ignoreSpaces: false,",
+						"     broadcast: 'auto')~> join1",
+						"join1 select(mapColumn(",
+						"          produccion_id,",
+						"          planta_id,",
+						"          producto_id = produccion@producto_id,",
+						"          nro_lote = produccion@nro_lote,",
+						"          fecha_produccion,",
+						"          cantidad_producida = cantidad,",
+						"          unidad,",
+						"          costo_produccion_bs = costo_produccion,",
+						"          fecha_vencimiento,",
+						"          cantidad_despachada,",
+						"          estado = inventario@estado",
+						"     ),",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> select1",
+						"select1 derive(produccion_id = toInteger(produccion_id),",
+						"          planta_id = toInteger(planta_id),",
+						"          producto_id = toInteger(producto_id),",
+						"          nro_lote = upper(trim(nro_lote)),",
+						"          fecha_produccion = toDate(fecha_produccion, 'yyyy-MM-dd'),",
+						"          fecha_vencimiento = toDate(fecha_vencimiento, 'yyyy-MM-dd'),",
+						"          cantidad_producida = toDecimal(cantidad_producida, 18, 2),",
+						"          cantidad_despachada = toDecimal(cantidad_despachada, 18, 2),",
+						"          costo_produccion_bs = toDecimal(costo_produccion_bs, 18, 2),",
+						"          unidad = upper(trim(unidad)),",
+						"          estado = upper(trim(estado))) ~> derivedColumn1",
+						"derivedColumn1 sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     input(",
+						"          produccion_id as integer,",
+						"          planta_id as integer,",
+						"          producto_id as integer,",
+						"          nro_lote as string,",
+						"          fecha_produccion as date,",
+						"          fecha_vencimiento as date,",
+						"          cantidad_producida as decimal(18,2),",
+						"          cantidad_despachada as decimal(18,2),",
+						"          costo_produccion_bs as decimal(18,2),",
+						"          unidad as string,",
+						"          estado as string",
+						"     ),",
+						"     deletable:false,",
+						"     insertable:true,",
+						"     updateable:false,",
+						"     upsertable:false,",
+						"     format: 'table',",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     errorHandlingOption: 'stopOnFirstError',",
+						"     mapColumn(",
+						"          produccion_id,",
+						"          planta_id,",
+						"          producto_id,",
+						"          nro_lote,",
+						"          fecha_produccion,",
+						"          fecha_vencimiento,",
+						"          cantidad_producida,",
+						"          cantidad_despachada,",
+						"          costo_produccion_bs,",
+						"          unidad,",
+						"          estado",
+						"     )) ~> sink1"
+					]
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/df_silver_segip_personas')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"folder": {
+					"name": "silver"
+				},
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "segip_personas_csv",
+								"type": "DatasetReference"
+							},
+							"name": "source1"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "tbl_segip_personas",
+								"type": "DatasetReference"
+							},
+							"name": "sink1"
+						}
+					],
+					"transformations": [
+						{
+							"name": "derivedColumn1"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          ci as string,",
+						"          nombres as string,",
+						"          apellido_paterno as string,",
+						"          apellido_materno as string,",
+						"          fecha_nacimiento as string,",
+						"          genero as string,",
+						"          estado_civil as string,",
+						"          ci_conyuge as string,",
+						"          numero_hijos as string,",
+						"          ci_padre as string,",
+						"          ci_madre as string,",
+						"          profesion as string,",
+						"          nivel_estudios as string,",
+						"          municipio_residencia as string,",
+						"          fecha_emision as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false) ~> source1",
+						"source1 derive(ci = upper(trim(ci)),",
+						"          nombres = upper(trim(nombres)),",
+						"          apellido_paterno = upper(trim(apellido_paterno)),",
+						"          apellido_materno = upper(trim(apellido_materno)),",
+						"          fecha_nacimiento = toDate(fecha_nacimiento, 'yyyy-MM-dd'),",
+						"          genero = upper(trim(genero)),",
+						"          estado_civil = upper(trim(estado_civil)),",
+						"          ci_conyuge = upper(trim(ci_conyuge)),",
+						"          numero_hijos = toInteger(numero_hijos),",
+						"          ci_padre = upper(trim(ci_padre)),",
+						"          ci_madre = upper(trim(ci_madre)),",
+						"          profesion = iif(isNull(profesion) || trim(profesion) == '', 'NO REGISTRADO', upper(trim(profesion))),",
+						"          nivel_estudios = upper(trim(nivel_estudios)),",
+						"          municipio_residencia = upper(trim(municipio_residencia)),",
+						"          fecha_emision = toDate(fecha_emision, 'yyyy-MM-dd')) ~> derivedColumn1",
+						"derivedColumn1 sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     input(",
+						"          ci as string,",
+						"          nombres as string,",
+						"          apellido_paterno as string,",
+						"          apellido_materno as string,",
+						"          fecha_nacimiento as date,",
+						"          genero as string,",
+						"          estado_civil as string,",
+						"          ci_conyuge as string,",
+						"          numero_hijos as integer,",
+						"          ci_padre as string,",
+						"          ci_madre as string,",
+						"          profesion as string,",
+						"          nivel_estudios as string,",
+						"          municipio_residencia as string,",
+						"          fecha_emision as date",
+						"     ),",
+						"     deletable:false,",
+						"     insertable:true,",
+						"     updateable:false,",
+						"     upsertable:false,",
+						"     format: 'table',",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     errorHandlingOption: 'stopOnFirstError',",
+						"     mapColumn(",
+						"          ci,",
+						"          nombres,",
+						"          apellido_paterno,",
+						"          apellido_materno,",
+						"          fecha_nacimiento,",
+						"          genero,",
+						"          estado_civil,",
+						"          ci_conyuge,",
+						"          numero_hijos,",
+						"          ci_padre,",
+						"          ci_madre,",
+						"          profesion,",
+						"          nivel_estudios,",
+						"          municipio_residencia,",
+						"          fecha_emision",
+						"     )) ~> sink1"
+					]
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/df_silver_spl_entregas')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"folder": {
+					"name": "silver"
+				},
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "spl_entrega_agencias_csv",
+								"type": "DatasetReference"
+							},
+							"name": "entregasagencias"
+						},
+						{
+							"dataset": {
+								"referenceName": "spl_entregas_supermercado_csv",
+								"type": "DatasetReference"
+							},
+							"name": "entregassupermercado"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "tbl_spl_entregas_agencia",
+								"type": "DatasetReference"
+							},
+							"name": "sink1"
+						},
+						{
+							"dataset": {
+								"referenceName": "tbl_spl_entregas_supermercado",
+								"type": "DatasetReference"
+							},
+							"name": "sink2"
+						}
+					],
+					"transformations": [
+						{
+							"name": "derivedColumn1"
+						},
+						{
+							"name": "derivedColumn2"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          entrega_ag_id as string,",
+						"          asignacion_id as string,",
+						"          ci_beneficiaria as string,",
+						"          fecha_entrega as string,",
+						"          productos as string,",
+						"          lote as string,",
+						"          peso_kg as string,",
+						"          punto_entrega as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false) ~> entregasagencias",
+						"source(output(",
+						"          entrega_super_id as string,",
+						"          asignacion_id as string,",
+						"          ci_beneficiaria as string,",
+						"          supermercado_id as string,",
+						"          fecha_retiro as string,",
+						"          tipo_carne as string,",
+						"          cantidad_kg as string,",
+						"          monto_bs as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false) ~> entregassupermercado",
+						"entregasagencias derive(entrega_ag_id = toInteger(entrega_ag_id),",
+						"          asignacion_id = toInteger(asignacion_id),",
+						"          ci_beneficiaria = upper(trim(ci_beneficiaria)),",
+						"          fecha_entrega = toDate(fecha_entrega, 'yyyy-MM-dd'),",
+						"          productos = upper(trim(productos)),",
+						"          lote = upper(trim(lote)),",
+						"          peso_kg = toDecimal(peso_kg, 10, 2),",
+						"          punto_entrega = upper(trim(punto_entrega))) ~> derivedColumn1",
+						"entregassupermercado derive(entrega_super_id = toInteger(entrega_super_id),",
+						"          asignacion_id = toInteger(asignacion_id),",
+						"          ci_beneficiaria = upper(trim(ci_beneficiaria)),",
+						"          supermercado_id = toInteger(supermercado_id),",
+						"          fecha_retiro = toDate(fecha_retiro, 'yyyy-MM-dd'),",
+						"          tipo_carne = upper(trim(tipo_carne)),",
+						"          cantidad_kg = toDecimal(cantidad_kg, 10, 2),",
+						"          monto_bs = toDecimal(monto_bs, 10, 2)) ~> derivedColumn2",
+						"derivedColumn1 sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     input(",
+						"          entrega_ag_id as integer,",
+						"          asignacion_id as integer,",
+						"          ci_beneficiaria as string,",
+						"          fecha_entrega as date,",
+						"          productos as string,",
+						"          lote as string,",
+						"          peso_kg as decimal(10,2),",
+						"          punto_entrega as string",
+						"     ),",
+						"     deletable:false,",
+						"     insertable:true,",
+						"     updateable:false,",
+						"     upsertable:false,",
+						"     format: 'table',",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     errorHandlingOption: 'stopOnFirstError',",
+						"     mapColumn(",
+						"          entrega_ag_id,",
+						"          asignacion_id,",
+						"          ci_beneficiaria,",
+						"          fecha_entrega,",
+						"          productos,",
+						"          lote,",
+						"          peso_kg,",
+						"          punto_entrega",
+						"     )) ~> sink1",
+						"derivedColumn2 sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     input(",
+						"          entrega_super_id as integer,",
+						"          asignacion_id as integer,",
+						"          ci_beneficiaria as string,",
+						"          supermercado_id as integer,",
+						"          fecha_retiro as date,",
+						"          tipo_carne as string,",
+						"          cantidad_kg as decimal(10,2),",
+						"          monto_bs as decimal(10,2)",
+						"     ),",
+						"     deletable:false,",
+						"     insertable:true,",
+						"     updateable:false,",
+						"     upsertable:false,",
+						"     format: 'table',",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     errorHandlingOption: 'stopOnFirstError',",
+						"     mapColumn(",
+						"          entrega_super_id,",
+						"          asignacion_id,",
+						"          ci_beneficiaria,",
+						"          supermercado_id,",
+						"          fecha_retiro,",
+						"          tipo_carne,",
+						"          cantidad_kg,",
+						"          monto_bs",
+						"     )) ~> sink2"
+					]
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/df_silver_subsidio_lactancia')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"folder": {
+					"name": "silver"
+				},
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "spl_empleadores_csv",
+								"type": "DatasetReference"
+							},
+							"name": "empleadores"
+						},
+						{
+							"dataset": {
+								"referenceName": "spl_afiliaciones_csv",
+								"type": "DatasetReference"
+							},
+							"name": "afiliaciones"
+						},
+						{
+							"dataset": {
+								"referenceName": "spl_asignaciones_mensuales_csv",
+								"type": "DatasetReference"
+							},
+							"name": "asignacionesmensuales"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "tbl_spl_empleadores",
+								"type": "DatasetReference"
+							},
+							"name": "sink1"
+						},
+						{
+							"dataset": {
+								"referenceName": "tbl_spl_asignaciones",
+								"type": "DatasetReference"
+							},
+							"name": "sink2"
+						}
+					],
+					"transformations": [
+						{
+							"name": "select1"
+						},
+						{
+							"name": "derivedColumn1"
+						},
+						{
+							"name": "join1"
+						},
+						{
+							"name": "select2"
+						},
+						{
+							"name": "derivedColumn2"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          empleador_id as string,",
+						"          nit as string,",
+						"          razon_social as string,",
+						"          tipo as string,",
+						"          nro_patronal as string,",
+						"          municipio as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false) ~> empleadores",
+						"source(output(",
+						"          afiliacion_id as string,",
+						"          ci_beneficiaria as string,",
+						"          empleador_id as string,",
+						"          caja_id as string,",
+						"          fecha_afiliacion as string,",
+						"          nro_matricula as string,",
+						"          tipo_subsidio as string,",
+						"          estado as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false) ~> afiliaciones",
+						"source(output(",
+						"          asignacion_id as string,",
+						"          afiliacion_id as string,",
+						"          mes as string,",
+						"          gestion as string,",
+						"          monto_bs as string,",
+						"          monto_productos as string,",
+						"          monto_carnes as string,",
+						"          estado as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false) ~> asignacionesmensuales",
+						"empleadores select(mapColumn(",
+						"          empleador_id,",
+						"          razon_social,",
+						"          tipo,",
+						"          municipio",
+						"     ),",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> select1",
+						"select1 derive(empleador_id = toInteger(empleador_id),",
+						"          razon_social = upper(trim(razon_social)),",
+						"          tipo = upper(trim(tipo)),",
+						"          municipio = upper(trim(municipio))) ~> derivedColumn1",
+						"asignacionesmensuales, afiliaciones join(asignacionesmensuales@afiliacion_id == afiliaciones@afiliacion_id,",
+						"     joinType:'inner',",
+						"     matchType:'exact',",
+						"     ignoreSpaces: false,",
+						"     broadcast: 'auto')~> join1",
+						"join1 select(mapColumn(",
+						"          asignacion_id,",
+						"          mes,",
+						"          gestion,",
+						"          monto_bs,",
+						"          monto_productos,",
+						"          estado = asignacionesmensuales@estado,",
+						"          ci_beneficiaria,",
+						"          empleador_id,",
+						"          tipo_subsidio",
+						"     ),",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> select2",
+						"select2 derive(asignacion_id = toInteger(asignacion_id),",
+						"          ci_beneficiaria = upper(trim(ci_beneficiaria)),",
+						"          empleador_id = toInteger(empleador_id),",
+						"          mes = toInteger(mes),",
+						"          gestion = toInteger(gestion),",
+						"          monto_bs = toDecimal(monto_bs, 10, 2),",
+						"          monto_productos = toDecimal(monto_productos, 10, 2),",
+						"          tipo_subsidio = upper(trim(tipo_subsidio)),",
+						"          estado = upper(trim(estado))) ~> derivedColumn2",
+						"derivedColumn1 sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     input(",
+						"          empleador_id as integer,",
+						"          razon_social as string,",
+						"          tipo as string,",
+						"          municipio as string",
+						"     ),",
+						"     deletable:false,",
+						"     insertable:true,",
+						"     updateable:false,",
+						"     upsertable:false,",
+						"     format: 'table',",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     errorHandlingOption: 'stopOnFirstError',",
+						"     mapColumn(",
+						"          empleador_id,",
+						"          razon_social,",
+						"          tipo,",
+						"          municipio",
+						"     )) ~> sink1",
+						"derivedColumn2 sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     input(",
+						"          asignacion_id as integer,",
+						"          ci_beneficiaria as string,",
+						"          empleador_id as integer,",
+						"          mes as integer,",
+						"          gestion as integer,",
+						"          monto_bs as decimal(10,2),",
+						"          monto_productos as decimal(10,2),",
+						"          tipo_subsidio as string,",
+						"          estado as string",
+						"     ),",
+						"     deletable:false,",
+						"     insertable:true,",
+						"     updateable:false,",
+						"     upsertable:false,",
+						"     format: 'table',",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     errorHandlingOption: 'stopOnFirstError',",
+						"     mapColumn(",
+						"          asignacion_id,",
+						"          ci_beneficiaria,",
+						"          empleador_id,",
+						"          mes,",
+						"          gestion,",
+						"          monto_bs,",
+						"          monto_productos,",
+						"          tipo_subsidio,",
+						"          estado",
+						"     )) ~> sink2"
+					]
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/df_silver_subsidio_universal')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"folder": {
+					"name": "silver"
+				},
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "establecimientos_csv",
+								"type": "DatasetReference"
+							},
+							"name": "establecimientos"
+						},
+						{
+							"dataset": {
+								"referenceName": "catalogo_paquetes_csv",
+								"type": "DatasetReference"
+							},
+							"name": "catalogo"
+						},
+						{
+							"dataset": {
+								"referenceName": "boletas_csv",
+								"type": "DatasetReference"
+							},
+							"name": "boletas"
+						},
+						{
+							"dataset": {
+								"referenceName": "entregas_csv",
+								"type": "DatasetReference"
+							},
+							"name": "entregas"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "tbl_sup_establecimientos",
+								"type": "DatasetReference"
+							},
+							"name": "sink1"
+						},
+						{
+							"dataset": {
+								"referenceName": "tbl_sup_paquetes",
+								"type": "DatasetReference"
+							},
+							"name": "sink2"
+						},
+						{
+							"dataset": {
+								"referenceName": "tbl_sup_entregas",
+								"type": "DatasetReference"
+							},
+							"name": "sink3"
+						}
+					],
+					"transformations": [
+						{
+							"name": "select1"
+						},
+						{
+							"name": "derivedColumn1"
+						},
+						{
+							"name": "select2"
+						},
+						{
+							"name": "derivedColumn2"
+						},
+						{
+							"name": "join1"
+						},
+						{
+							"name": "select3"
+						},
+						{
+							"name": "derivedColumn3"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          establecimiento_id as string,",
+						"          codigo_snis as string,",
+						"          nombre as string,",
+						"          tipo as string,",
+						"          nivel_atencion as string,",
+						"          municipio as string,",
+						"          departamento as string,",
+						"          red_salud as string,",
+						"          estado as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false) ~> establecimientos",
+						"source(output(",
+						"          paquete_id as string,",
+						"          nombre as string,",
+						"          contenido as string,",
+						"          peso_estandar_kg as string,",
+						"          costo_estimado_bs as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false) ~> catalogo",
+						"source(output(",
+						"          boleta_id as string,",
+						"          control_id as string,",
+						"          ci_beneficiaria as string,",
+						"          nro_boleta as string,",
+						"          fecha_emision as string,",
+						"          estado as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false) ~> boletas",
+						"source(output(",
+						"          entrega_id as string,",
+						"          boleta_id as string,",
+						"          ci_beneficiaria as string,",
+						"          establecimiento_id as string,",
+						"          paquete_id as string,",
+						"          paquete_nombre as string,",
+						"          fecha_entrega as string,",
+						"          lote_produccion as string,",
+						"          peso_paquete_kg as string,",
+						"          fecha_proxima_entrega as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false) ~> entregas",
+						"establecimientos select(mapColumn(",
+						"          establecimiento_id,",
+						"          nombre,",
+						"          tipo,",
+						"          municipio,",
+						"          departamento",
+						"     ),",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> select1",
+						"select1 derive(establecimiento_id = toInteger(establecimiento_id),",
+						"          nombre = upper(trim(nombre)),",
+						"          tipo = upper(trim(tipo)),",
+						"          municipio = upper(trim(municipio)),",
+						"          departamento = upper(trim(departamento))) ~> derivedColumn1",
+						"catalogo select(mapColumn(",
+						"          paquete_id,",
+						"          nombre,",
+						"          peso_estandar_kg,",
+						"          costo_estimado_bs",
+						"     ),",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> select2",
+						"select2 derive(paquete_id = toInteger(paquete_id),",
+						"          nombre = upper(trim(nombre)),",
+						"          peso_estandar_kg = toDecimal(peso_estandar_kg, 10, 2),",
+						"          costo_estimado_bs = toDecimal(costo_estimado_bs, 10, 2)) ~> derivedColumn2",
+						"entregas, boletas join(entregas@boleta_id == boletas@boleta_id,",
+						"     joinType:'inner',",
+						"     matchType:'exact',",
+						"     ignoreSpaces: false,",
+						"     broadcast: 'auto')~> join1",
+						"join1 select(mapColumn(",
+						"          entrega_id,",
+						"          boleta_id = entregas@boleta_id,",
+						"          ci_beneficiaria = entregas@ci_beneficiaria,",
+						"          establecimiento_id,",
+						"          paquete_id,",
+						"          fecha_entrega,",
+						"          lote_produccion,",
+						"          fecha_emision_boleta = fecha_emision,",
+						"          estado",
+						"     ),",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> select3",
+						"select3 derive(entrega_id = toInteger(entrega_id),",
+						"          boleta_id = toInteger(boleta_id),",
+						"          ci_beneficiaria = upper(trim(ci_beneficiaria)),",
+						"          establecimiento_id = toInteger(establecimiento_id),",
+						"          paquete_id = toInteger(paquete_id),",
+						"          lote_produccion = upper(trim(lote_produccion)),",
+						"          fecha_emision_boleta = toDate(fecha_emision_boleta, 'yyyy-MM-dd'),",
+						"          fecha_entrega = toDate(fecha_entrega, 'yyyy-MM-dd'),",
+						"          estado = upper(trim(estado))) ~> derivedColumn3",
+						"derivedColumn1 sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     input(",
+						"          establecimiento_id as integer,",
+						"          nombre as string,",
+						"          tipo as string,",
+						"          municipio as string,",
+						"          departamento as string",
+						"     ),",
+						"     deletable:false,",
+						"     insertable:true,",
+						"     updateable:false,",
+						"     upsertable:false,",
+						"     format: 'table',",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     errorHandlingOption: 'stopOnFirstError',",
+						"     mapColumn(",
+						"          establecimiento_id,",
+						"          nombre,",
+						"          tipo,",
+						"          municipio,",
+						"          departamento",
+						"     )) ~> sink1",
+						"derivedColumn2 sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     input(",
+						"          paquete_id as integer,",
+						"          nombre as string,",
+						"          peso_estandar_kg as decimal(10,2),",
+						"          costo_estimado_bs as decimal(10,2)",
+						"     ),",
+						"     deletable:false,",
+						"     insertable:true,",
+						"     updateable:false,",
+						"     upsertable:false,",
+						"     format: 'table',",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     errorHandlingOption: 'stopOnFirstError',",
+						"     mapColumn(",
+						"          paquete_id,",
+						"          nombre,",
+						"          peso_estandar_kg,",
+						"          costo_estimado_bs",
+						"     )) ~> sink2",
+						"derivedColumn3 sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     input(",
+						"          entrega_id as integer,",
+						"          boleta_id as integer,",
+						"          ci_beneficiaria as string,",
+						"          establecimiento_id as integer,",
+						"          paquete_id as integer,",
+						"          lote_produccion as string,",
+						"          fecha_emision_boleta as date,",
+						"          fecha_entrega as date,",
+						"          estado as string",
+						"     ),",
+						"     deletable:false,",
+						"     insertable:true,",
+						"     updateable:false,",
+						"     upsertable:false,",
+						"     format: 'table',",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     errorHandlingOption: 'stopOnFirstError',",
+						"     mapColumn(",
+						"          entrega_id,",
+						"          boleta_id,",
+						"          ci_beneficiaria,",
+						"          establecimiento_id,",
+						"          paquete_id,",
+						"          lote_produccion,",
+						"          fecha_emision_boleta,",
+						"          fecha_entrega,",
+						"          estado",
+						"     )) ~> sink3"
+					]
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/pl_carga_silver')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "act_silver_segip_personas",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "df_silver_segip_personas",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"source1": {},
+									"sink1": {}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					},
+					{
+						"name": "act_silver_sedem_infraestructura_productos",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [
+							{
+								"activity": "act_silver_segip_personas",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "df_silver_sedem_infraestructura_productos",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"source1": {},
+									"source2": {},
+									"source3": {},
+									"sink1": {},
+									"sink2": {}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					},
+					{
+						"name": "df_silver_sedem_produccion",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [
+							{
+								"activity": "act_silver_sedem_infraestructura_productos",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "df_silver_sedem_produccion",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"produccion": {},
+									"inventario": {},
+									"sink1": {}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					},
+					{
+						"name": "df_silver_agencia_logistica",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [
+							{
+								"activity": "df_silver_sedem_produccion",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "df_silver_agencia_logistica",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"almacenes": {},
+									"recepciones": {},
+									"despachos": {},
+									"sink1": {},
+									"sink2": {},
+									"sink3": {}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					},
+					{
+						"name": "df_silver_subsidio_universal",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [
+							{
+								"activity": "df_silver_agencia_logistica",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "df_silver_subsidio_universal",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"establecimientos": {},
+									"catalogo": {},
+									"boletas": {},
+									"entregas": {},
+									"sink1": {},
+									"sink2": {},
+									"sink3": {}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					},
+					{
+						"name": "df_silver_subsidio_lactancia",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [
+							{
+								"activity": "df_silver_subsidio_universal",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "df_silver_subsidio_lactancia",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"empleadores": {},
+									"afiliaciones": {},
+									"asignacionesmensuales": {},
+									"sink1": {},
+									"sink2": {}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					},
+					{
+						"name": "df_silver_spl_entregas",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [
+							{
+								"activity": "df_silver_subsidio_lactancia",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "df_silver_spl_entregas",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"entregasagencias": {},
+									"entregassupermercado": {},
+									"sink1": {},
+									"sink2": {}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/dataflows/df_silver_segip_personas')]",
+				"[concat(variables('factoryId'), '/dataflows/df_silver_sedem_infraestructura_productos')]",
+				"[concat(variables('factoryId'), '/dataflows/df_silver_sedem_produccion')]",
+				"[concat(variables('factoryId'), '/dataflows/df_silver_agencia_logistica')]",
+				"[concat(variables('factoryId'), '/dataflows/df_silver_subsidio_universal')]",
+				"[concat(variables('factoryId'), '/dataflows/df_silver_subsidio_lactancia')]",
+				"[concat(variables('factoryId'), '/dataflows/df_silver_spl_entregas')]"
+			]
+		}
+	]
+}

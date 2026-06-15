@@ -27,7 +27,6 @@
 			"transformations": [],
 			"scriptLines": [
 				"source(output(",
-				"          persona_key as integer,",
 				"          ci as string,",
 				"          nombre_completo as string,",
 				"          nombres as string,",

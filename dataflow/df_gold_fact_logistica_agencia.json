@@ -27,7 +27,6 @@
 			"transformations": [],
 			"scriptLines": [
 				"source(output(",
-				"          movimiento_fact_key as integer,",
 				"          tipo_movimiento as string,",
 				"          recepcion_id as integer,",
 				"          despacho_id as integer,",
@@ -43,7 +42,7 @@
 				"     allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     isolationLevel: 'READ_UNCOMMITTED',",
-				"     query: 'SELECT\\n    \\'RECEPCION\\' AS tipo_movimiento,\\n    r.recepcion_id,\\n    CAST(NULL AS INT) AS despacho_id,\\n    CONVERT(INT, CONVERT(CHAR(8), r.fecha_recepcion, 112)) AS fecha_key,\\n    r.fecha_recepcion AS fecha_movimiento,\\n    da.almacen_key,\\n    r.nro_lote,\\n    r.cantidad_recibida AS cantidad,\\n    r.condicion,\\n    CAST(NULL AS VARCHAR(200)) AS centro_destino,\\n    r.estado\\nFROM silver.tbl_agencia_recepciones r\\nLEFT JOIN gold.dim_almacen da\\n    ON r.almacen_id = da.almacen_id\\n\\nUNION ALL\\n\\nSELECT\\n    \\'DESPACHO\\' AS tipo_movimiento,\\n    d.recepcion_id,\\n    d.despacho_id,\\n    CONVERT(INT, CONVERT(CHAR(8), d.fecha_despacho, 112)) AS fecha_key,\\n    d.fecha_despacho AS fecha_movimiento,\\n    da.almacen_key,\\n    d.nro_lote,\\n    d.cantidad_despachada AS cantidad,\\n    CAST(NULL AS VARCHAR(150)) AS condicion,\\n    d.centro_destino,\\n    d.estado\\nFROM silver.tbl_agencia_despachos d\\nLEFT JOIN gold.dim_almacen da\\n    ON d.almacen_id = da.almacen_id;',",
+				"     query: 'SELECT\\n    \\'RECEPCION\\' AS tipo_movimiento,\\n    r.recepcion_id,\\n    CAST(NULL AS INT) AS despacho_id,\\n    CONVERT(INT, CONVERT(CHAR(8), r.fecha_recepcion, 112)) AS fecha_key,\\n    r.fecha_recepcion AS fecha_movimiento,\\n    da.almacen_key,\\n    r.nro_lote,\\n    r.cantidad_recibida AS cantidad,\\n    r.condicion,\\n    CAST(NULL AS VARCHAR(200)) AS centro_destino,\\n    r.estado\\nFROM silver.tbl_agencia_recepciones r\\nLEFT JOIN gold.dim_almacen da\\n    ON r.almacen_id = da.almacen_id\\n\\nUNION ALL\\n\\nSELECT\\n    \\'DESPACHO\\' AS tipo_movimiento,\\n    d.recepcion_id,\\n    d.despacho_id,\\n    CONVERT(INT, CONVERT(CHAR(8), d.fecha_despacho, 112)) AS fecha_key,\\n    d.fecha_despacho AS fecha_movimiento,\\n    da.almacen_key,\\n    d.nro_lote,\\n    d.cantidad_despachada AS cantidad,\\n    CAST(NULL AS VARCHAR(150)) AS condicion,\\n    d.centro_destino,\\n    d.estado\\nFROM silver.tbl_agencia_despachos d\\nLEFT JOIN gold.dim_almacen da\\n    ON d.almacen_id = da.almacen_id',",
 				"     format: 'query') ~> srcFactLogistica",
 				"srcFactLogistica sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",

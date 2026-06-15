@@ -27,7 +27,6 @@
 			"transformations": [],
 			"scriptLines": [
 				"source(output(",
-				"          planta_key as integer,",
 				"          planta_id as integer,",
 				"          empresa_sigla as string,",
 				"          empresa_nombre as string,",
@@ -40,7 +39,7 @@
 				"     allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     isolationLevel: 'READ_UNCOMMITTED',",
-				"     query: 'SELECT\\n    planta_id,\\n    empresa_sigla,\\n    empresa_nombre,\\n    planta_nombre,\\n    tipo_planta,\\n    municipio,\\n    departamento,\\n    estado_operativo\\nFROM silver.tbl_sedem_infraestructura;',",
+				"     query: 'SELECT\\n    planta_id,\\n    empresa_sigla,\\n    empresa_nombre,\\n    planta_nombre,\\n    tipo_planta,\\n    municipio,\\n    departamento,\\n    estado_operativo\\nFROM silver.tbl_sedem_infraestructura',",
 				"     format: 'query') ~> srcPlanta",
 				"srcPlanta sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",

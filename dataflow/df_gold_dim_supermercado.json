@@ -27,7 +27,6 @@
 			"transformations": [],
 			"scriptLines": [
 				"source(output(",
-				"          supermercado_key as integer,",
 				"          supermercado_id as integer,",
 				"          cadena as string,",
 				"          sucursal as string,",
@@ -38,7 +37,7 @@
 				"     allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     isolationLevel: 'READ_UNCOMMITTED',",
-				"     query: 'SELECT\\n    supermercado_id,\\n    cadena,\\n    sucursal,\\n    municipio,\\n    direccion,\\n    estado\\nFROM silver.tbl_spl_supermercados;',",
+				"     query: 'SELECT\\n    supermercado_id,\\n    cadena,\\n    sucursal,\\n    municipio,\\n    direccion,\\n    estado\\nFROM silver.tbl_spl_supermercados',",
 				"     format: 'query') ~> srcSupermercado",
 				"srcSupermercado sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",

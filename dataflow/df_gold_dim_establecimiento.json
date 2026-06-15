@@ -27,7 +27,6 @@
 			"transformations": [],
 			"scriptLines": [
 				"source(output(",
-				"          establecimiento_key as integer,",
 				"          establecimiento_id as integer,",
 				"          nombre as string,",
 				"          tipo as string,",
@@ -37,7 +36,7 @@
 				"     allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     isolationLevel: 'READ_UNCOMMITTED',",
-				"     query: 'SELECT\\n    establecimiento_id,\\n    nombre,\\n    tipo,\\n    municipio,\\n    departamento\\nFROM silver.tbl_sup_establecimientos;',",
+				"     query: 'SELECT\\n    establecimiento_id,\\n    nombre,\\n    tipo,\\n    municipio,\\n    departamento\\nFROM silver.tbl_sup_establecimientos',",
 				"     format: 'query') ~> srcEstablecimiento",
 				"srcEstablecimiento sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",

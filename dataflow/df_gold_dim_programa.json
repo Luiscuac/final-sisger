@@ -1,0 +1,64 @@
+{
+	"name": "df_gold_dim_programa",
+	"properties": {
+		"folder": {
+			"name": "gold"
+		},
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "gold_dim_programa",
+						"type": "DatasetReference"
+					},
+					"name": "srcPrograma"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "gold_dim_programa",
+						"type": "DatasetReference"
+					},
+					"name": "sinkGoldDimPrograma"
+				}
+			],
+			"transformations": [],
+			"scriptLines": [
+				"source(output(",
+				"          programa_key as integer,",
+				"          codigo_programa as string,",
+				"          nombre_programa as string,",
+				"          canal_entrega as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     query: 'SELECT \\n    \\'SUP\\' AS codigo_programa,\\n    \\'Subsidio Universal Prenatal por la Vida\\' AS nombre_programa,\\n    \\'Establecimiento de salud\\' AS canal_entrega\\n\\nUNION ALL\\n\\nSELECT \\n    \\'SPL_AGENCIA\\' AS codigo_programa,\\n    \\'Subsidio Prenatal y de Lactancia\\' AS nombre_programa,\\n    \\'Agencia Distribuidora\\' AS canal_entrega\\n\\nUNION ALL\\n\\nSELECT \\n    \\'SPL_SUPERMERCADO\\' AS codigo_programa,\\n    \\'Subsidio Prenatal y de Lactancia\\' AS nombre_programa,\\n    \\'Supermercado autorizado\\' AS canal_entrega;',",
+				"     format: 'query') ~> srcPrograma",
+				"srcPrograma sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          programa_key as integer,",
+				"          codigo_programa as string,",
+				"          nombre_programa as string,",
+				"          canal_entrega as string",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     mapColumn(",
+				"          codigo_programa,",
+				"          nombre_programa,",
+				"          canal_entrega",
+				"     )) ~> sinkGoldDimPrograma"
+			]
+		}
+	}
+}

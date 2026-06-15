@@ -1,0 +1,85 @@
+{
+	"name": "df_gold_fact_asignaciones_spl",
+	"properties": {
+		"folder": {
+			"name": "gold"
+		},
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "gold_fact_asignaciones_spl",
+						"type": "DatasetReference"
+					},
+					"name": "srcFactAsignaciones"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "gold_fact_asignaciones_spl",
+						"type": "DatasetReference"
+					},
+					"name": "sinkAsignacionesSpl"
+				}
+			],
+			"transformations": [],
+			"scriptLines": [
+				"source(output(",
+				"          asignacion_fact_key as integer,",
+				"          asignacion_id as integer,",
+				"          fecha_key as integer,",
+				"          persona_key as integer,",
+				"          empleador_key as integer,",
+				"          mes as integer,",
+				"          gestion as integer,",
+				"          monto_bs as decimal(18,2),",
+				"          monto_productos as decimal(18,2),",
+				"          tipo_subsidio as string,",
+				"          estado as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     query: 'SELECT\\n    a.asignacion_id,\\n    (a.gestion * 10000) + (a.mes * 100) + 1 AS fecha_key,\\n    dp.persona_key,\\n    de.empleador_key,\\n    a.mes,\\n    a.gestion,\\n    a.monto_bs,\\n    a.monto_productos,\\n    a.tipo_subsidio,\\n    a.estado\\nFROM silver.tbl_spl_asignaciones a\\nLEFT JOIN gold.dim_persona dp\\n    ON a.ci_beneficiaria = dp.ci\\nLEFT JOIN gold.dim_empleador de\\n    ON a.empleador_id = de.empleador_id;',",
+				"     format: 'query') ~> srcFactAsignaciones",
+				"srcFactAsignaciones sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          asignacion_fact_key as integer,",
+				"          asignacion_id as integer,",
+				"          fecha_key as integer,",
+				"          persona_key as integer,",
+				"          empleador_key as integer,",
+				"          mes as integer,",
+				"          gestion as integer,",
+				"          monto_bs as decimal(18,2),",
+				"          monto_productos as decimal(18,2),",
+				"          tipo_subsidio as string,",
+				"          estado as string",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     mapColumn(",
+				"          asignacion_id,",
+				"          fecha_key,",
+				"          persona_key,",
+				"          empleador_key,",
+				"          mes,",
+				"          gestion,",
+				"          monto_bs,",
+				"          monto_productos,",
+				"          tipo_subsidio,",
+				"          estado",
+				"     )) ~> sinkAsignacionesSpl"
+			]
+		}
+	}
+}

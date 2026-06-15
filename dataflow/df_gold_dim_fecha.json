@@ -1,0 +1,74 @@
+{
+	"name": "df_gold_dim_fecha",
+	"properties": {
+		"folder": {
+			"name": "gold"
+		},
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "gold_dim_fecha",
+						"type": "DatasetReference"
+					},
+					"name": "srcFecha"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "gold_dim_fecha",
+						"type": "DatasetReference"
+					},
+					"name": "sinkGoldDimFecha"
+				}
+			],
+			"transformations": [],
+			"scriptLines": [
+				"source(output(",
+				"          fecha_key as integer,",
+				"          fecha as date,",
+				"          anio as integer,",
+				"          mes as integer,",
+				"          nombre_mes as string,",
+				"          trimestre as integer,",
+				"          dia as integer",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     query: 'SELECT DISTINCT\\n    CONVERT(INT, CONVERT(CHAR(8), fecha, 112)) AS fecha_key,\\n    fecha,\\n    YEAR(fecha) AS anio,\\n    MONTH(fecha) AS mes,\\n    CASE MONTH(fecha)\\n        WHEN 1 THEN \\'Enero\\'\\n        WHEN 2 THEN \\'Febrero\\'\\n        WHEN 3 THEN \\'Marzo\\'\\n        WHEN 4 THEN \\'Abril\\'\\n        WHEN 5 THEN \\'Mayo\\'\\n        WHEN 6 THEN \\'Junio\\'\\n        WHEN 7 THEN \\'Julio\\'\\n        WHEN 8 THEN \\'Agosto\\'\\n        WHEN 9 THEN \\'Septiembre\\'\\n        WHEN 10 THEN \\'Octubre\\'\\n        WHEN 11 THEN \\'Noviembre\\'\\n        WHEN 12 THEN \\'Diciembre\\'\\n    END AS nombre_mes,\\n    DATEPART(QUARTER, fecha) AS trimestre,\\n    DAY(fecha) AS dia\\nFROM (\\n    SELECT fecha_produccion AS fecha FROM silver.tbl_sedem_produccion WHERE fecha_produccion IS NOT NULL\\n    UNION\\n    SELECT fecha_vencimiento FROM silver.tbl_sedem_produccion WHERE fecha_vencimiento IS NOT NULL\\n    UNION\\n    SELECT fecha_recepcion FROM silver.tbl_agencia_recepciones WHERE fecha_recepcion IS NOT NULL\\n    UNION\\n    SELECT fecha_despacho FROM silver.tbl_agencia_despachos WHERE fecha_despacho IS NOT NULL\\n    UNION\\n    SELECT fecha_llegada FROM silver.tbl_agencia_despachos WHERE fecha_llegada IS NOT NULL\\n    UNION\\n    SELECT fecha_emision_boleta FROM silver.tbl_sup_entregas WHERE fecha_emision_boleta IS NOT NULL\\n    UNION\\n    SELECT fecha_entrega FROM silver.tbl_sup_entregas WHERE fecha_entrega IS NOT NULL\\n    UNION\\n    SELECT fecha_entrega FROM silver.tbl_spl_entregas_agencia WHERE fecha_entrega IS NOT NULL\\n    UNION\\n    SELECT fecha_retiro FROM silver.tbl_spl_entregas_supermercado WHERE fecha_retiro IS NOT NULL\\n    UNION\\n    SELECT DATEFROMPARTS(gestion, mes, 1)\\n    FROM silver.tbl_spl_asignaciones\\n    WHERE mes BETWEEN 1 AND 12\\n) fechas;',",
+				"     format: 'query') ~> srcFecha",
+				"srcFecha sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          fecha_key as integer,",
+				"          fecha as date,",
+				"          anio as integer,",
+				"          mes as integer,",
+				"          nombre_mes as string,",
+				"          trimestre as integer,",
+				"          dia as integer",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     mapColumn(",
+				"          fecha_key,",
+				"          fecha,",
+				"          anio,",
+				"          mes,",
+				"          nombre_mes,",
+				"          trimestre,",
+				"          dia",
+				"     )) ~> sinkGoldDimFecha"
+			]
+		}
+	}
+}

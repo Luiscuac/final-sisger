@@ -1,0 +1,91 @@
+{
+	"name": "df_gold_fact_produccion_sedem",
+	"properties": {
+		"folder": {
+			"name": "gold"
+		},
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "gold_fact_produccion_sedem",
+						"type": "DatasetReference"
+					},
+					"name": "srcFactProduccion"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "gold_fact_produccion_sedem",
+						"type": "DatasetReference"
+					},
+					"name": "sinkProduccion"
+				}
+			],
+			"transformations": [],
+			"scriptLines": [
+				"source(output(",
+				"          produccion_fact_key as integer,",
+				"          produccion_id as integer,",
+				"          fecha_key as integer,",
+				"          fecha_produccion as date,",
+				"          fecha_vencimiento as date,",
+				"          producto_key as integer,",
+				"          planta_key as integer,",
+				"          nro_lote as string,",
+				"          cantidad_producida as decimal(18,2),",
+				"          cantidad_despachada as decimal(18,2),",
+				"          costo_produccion_bs as decimal(18,2),",
+				"          unidad as string,",
+				"          estado as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     query: 'SELECT\\n    p.produccion_id,\\n    CONVERT(INT, CONVERT(CHAR(8), p.fecha_produccion, 112)) AS fecha_key,\\n    p.fecha_produccion,\\n    p.fecha_vencimiento,\\n    dp.producto_key,\\n    dpl.planta_key,\\n    p.nro_lote,\\n    p.cantidad_producida,\\n    p.cantidad_despachada,\\n    p.costo_produccion_bs,\\n    p.unidad,\\n    p.estado\\nFROM silver.tbl_sedem_produccion p\\nLEFT JOIN gold.dim_producto dp\\n    ON p.producto_id = dp.producto_id\\nLEFT JOIN gold.dim_planta dpl\\n    ON p.planta_id = dpl.planta_id;',",
+				"     format: 'query') ~> srcFactProduccion",
+				"srcFactProduccion sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          produccion_fact_key as integer,",
+				"          produccion_id as integer,",
+				"          fecha_key as integer,",
+				"          fecha_produccion as date,",
+				"          fecha_vencimiento as date,",
+				"          producto_key as integer,",
+				"          planta_key as integer,",
+				"          nro_lote as string,",
+				"          cantidad_producida as decimal(18,2),",
+				"          cantidad_despachada as decimal(18,2),",
+				"          costo_produccion_bs as decimal(18,2),",
+				"          unidad as string,",
+				"          estado as string",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     mapColumn(",
+				"          produccion_id,",
+				"          fecha_key,",
+				"          fecha_produccion,",
+				"          fecha_vencimiento,",
+				"          producto_key,",
+				"          planta_key,",
+				"          nro_lote,",
+				"          cantidad_producida,",
+				"          cantidad_despachada,",
+				"          costo_produccion_bs,",
+				"          unidad,",
+				"          estado",
+				"     )) ~> sinkProduccion"
+			]
+		}
+	}
+}

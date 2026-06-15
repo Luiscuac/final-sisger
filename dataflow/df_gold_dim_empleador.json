@@ -54,7 +54,13 @@
 				"     format: 'table',",
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true,",
-				"     errorHandlingOption: 'stopOnFirstError') ~> sinkEmpleador"
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     mapColumn(",
+				"          empleador_id,",
+				"          razon_social,",
+				"          tipo,",
+				"          municipio",
+				"     )) ~> sinkEmpleador"
 			]
 		}
 	}

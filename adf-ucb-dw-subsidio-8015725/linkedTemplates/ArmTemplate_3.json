@@ -1,0 +1,2309 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Nombre de instancia de Data Factory",
+			"defaultValue": "adf-ucb-dw-subsidio-8015725"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/df_silver_subsidio_universal')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"folder": {
+					"name": "silver"
+				},
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "establecimientos_csv",
+								"type": "DatasetReference"
+							},
+							"name": "establecimientos"
+						},
+						{
+							"dataset": {
+								"referenceName": "catalogo_paquetes_csv",
+								"type": "DatasetReference"
+							},
+							"name": "catalogo"
+						},
+						{
+							"dataset": {
+								"referenceName": "boletas_csv",
+								"type": "DatasetReference"
+							},
+							"name": "boletas"
+						},
+						{
+							"dataset": {
+								"referenceName": "entregas_csv",
+								"type": "DatasetReference"
+							},
+							"name": "entregas"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "tbl_sup_establecimientos",
+								"type": "DatasetReference"
+							},
+							"name": "sink1"
+						},
+						{
+							"dataset": {
+								"referenceName": "tbl_sup_paquetes",
+								"type": "DatasetReference"
+							},
+							"name": "sink2"
+						},
+						{
+							"dataset": {
+								"referenceName": "tbl_sup_entregas",
+								"type": "DatasetReference"
+							},
+							"name": "sink3"
+						}
+					],
+					"transformations": [
+						{
+							"name": "select1"
+						},
+						{
+							"name": "derivedColumn1"
+						},
+						{
+							"name": "select2"
+						},
+						{
+							"name": "derivedColumn2"
+						},
+						{
+							"name": "join1"
+						},
+						{
+							"name": "select3"
+						},
+						{
+							"name": "derivedColumn3"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          establecimiento_id as string,",
+						"          codigo_snis as string,",
+						"          nombre as string,",
+						"          tipo as string,",
+						"          nivel_atencion as string,",
+						"          municipio as string,",
+						"          departamento as string,",
+						"          red_salud as string,",
+						"          estado as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false) ~> establecimientos",
+						"source(output(",
+						"          paquete_id as string,",
+						"          nombre as string,",
+						"          contenido as string,",
+						"          peso_estandar_kg as string,",
+						"          costo_estimado_bs as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false) ~> catalogo",
+						"source(output(",
+						"          boleta_id as string,",
+						"          control_id as string,",
+						"          ci_beneficiaria as string,",
+						"          nro_boleta as string,",
+						"          fecha_emision as string,",
+						"          estado as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false) ~> boletas",
+						"source(output(",
+						"          entrega_id as string,",
+						"          boleta_id as string,",
+						"          ci_beneficiaria as string,",
+						"          establecimiento_id as string,",
+						"          paquete_id as string,",
+						"          paquete_nombre as string,",
+						"          fecha_entrega as string,",
+						"          lote_produccion as string,",
+						"          peso_paquete_kg as string,",
+						"          fecha_proxima_entrega as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false) ~> entregas",
+						"establecimientos select(mapColumn(",
+						"          establecimiento_id,",
+						"          nombre,",
+						"          tipo,",
+						"          municipio,",
+						"          departamento",
+						"     ),",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> select1",
+						"select1 derive(establecimiento_id = toInteger(establecimiento_id),",
+						"          nombre = upper(trim(nombre)),",
+						"          tipo = upper(trim(tipo)),",
+						"          municipio = upper(trim(municipio)),",
+						"          departamento = upper(trim(departamento))) ~> derivedColumn1",
+						"catalogo select(mapColumn(",
+						"          paquete_id,",
+						"          nombre,",
+						"          peso_estandar_kg,",
+						"          costo_estimado_bs",
+						"     ),",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> select2",
+						"select2 derive(paquete_id = toInteger(paquete_id),",
+						"          nombre = upper(trim(nombre)),",
+						"          peso_estandar_kg = toDecimal(peso_estandar_kg, 10, 2),",
+						"          costo_estimado_bs = toDecimal(costo_estimado_bs, 10, 2)) ~> derivedColumn2",
+						"entregas, boletas join(entregas@boleta_id == boletas@boleta_id,",
+						"     joinType:'inner',",
+						"     matchType:'exact',",
+						"     ignoreSpaces: false,",
+						"     broadcast: 'auto')~> join1",
+						"join1 select(mapColumn(",
+						"          entrega_id,",
+						"          boleta_id = entregas@boleta_id,",
+						"          ci_beneficiaria = entregas@ci_beneficiaria,",
+						"          establecimiento_id,",
+						"          paquete_id,",
+						"          fecha_entrega,",
+						"          lote_produccion,",
+						"          fecha_emision_boleta = fecha_emision,",
+						"          estado",
+						"     ),",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> select3",
+						"select3 derive(entrega_id = toInteger(entrega_id),",
+						"          boleta_id = toInteger(boleta_id),",
+						"          ci_beneficiaria = upper(trim(ci_beneficiaria)),",
+						"          establecimiento_id = toInteger(establecimiento_id),",
+						"          paquete_id = toInteger(paquete_id),",
+						"          lote_produccion = upper(trim(lote_produccion)),",
+						"          fecha_emision_boleta = toDate(fecha_emision_boleta, 'yyyy-MM-dd'),",
+						"          fecha_entrega = toDate(fecha_entrega, 'yyyy-MM-dd'),",
+						"          estado = upper(trim(estado))) ~> derivedColumn3",
+						"derivedColumn1 sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     input(",
+						"          establecimiento_id as integer,",
+						"          nombre as string,",
+						"          tipo as string,",
+						"          municipio as string,",
+						"          departamento as string",
+						"     ),",
+						"     deletable:false,",
+						"     insertable:true,",
+						"     updateable:false,",
+						"     upsertable:false,",
+						"     format: 'table',",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     errorHandlingOption: 'stopOnFirstError',",
+						"     mapColumn(",
+						"          establecimiento_id,",
+						"          nombre,",
+						"          tipo,",
+						"          municipio,",
+						"          departamento",
+						"     )) ~> sink1",
+						"derivedColumn2 sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     input(",
+						"          paquete_id as integer,",
+						"          nombre as string,",
+						"          peso_estandar_kg as decimal(10,2),",
+						"          costo_estimado_bs as decimal(10,2)",
+						"     ),",
+						"     deletable:false,",
+						"     insertable:true,",
+						"     updateable:false,",
+						"     upsertable:false,",
+						"     format: 'table',",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     errorHandlingOption: 'stopOnFirstError',",
+						"     mapColumn(",
+						"          paquete_id,",
+						"          nombre,",
+						"          peso_estandar_kg,",
+						"          costo_estimado_bs",
+						"     )) ~> sink2",
+						"derivedColumn3 sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     input(",
+						"          entrega_id as integer,",
+						"          boleta_id as integer,",
+						"          ci_beneficiaria as string,",
+						"          establecimiento_id as integer,",
+						"          paquete_id as integer,",
+						"          lote_produccion as string,",
+						"          fecha_emision_boleta as date,",
+						"          fecha_entrega as date,",
+						"          estado as string",
+						"     ),",
+						"     deletable:false,",
+						"     insertable:true,",
+						"     updateable:false,",
+						"     upsertable:false,",
+						"     format: 'table',",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     errorHandlingOption: 'stopOnFirstError',",
+						"     mapColumn(",
+						"          entrega_id,",
+						"          boleta_id,",
+						"          ci_beneficiaria,",
+						"          establecimiento_id,",
+						"          paquete_id,",
+						"          lote_produccion,",
+						"          fecha_emision_boleta,",
+						"          fecha_entrega,",
+						"          estado",
+						"     )) ~> sink3"
+					]
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/df_gold_dim_producto')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"folder": {
+					"name": "gold"
+				},
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "tbl_sedem_productos",
+								"type": "DatasetReference"
+							},
+							"name": "srcSilverProductos"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "gold_dim_producto",
+								"type": "DatasetReference"
+							},
+							"name": "sinkGoldDimProducto"
+						}
+					],
+					"transformations": [
+						{
+							"name": "selDimProducto"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          producto_id as integer,",
+						"          empresa_sigla as string,",
+						"          nombre as string,",
+						"          categoria as string,",
+						"          presentacion as string,",
+						"          estado as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     isolationLevel: 'READ_UNCOMMITTED',",
+						"     format: 'table') ~> srcSilverProductos",
+						"srcSilverProductos select(mapColumn(",
+						"          producto_id,",
+						"          empresa_sigla,",
+						"          nombre_producto = nombre,",
+						"          categoria,",
+						"          presentacion,",
+						"          estado",
+						"     ),",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> selDimProducto",
+						"selDimProducto sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     input(",
+						"          producto_key as integer,",
+						"          producto_id as integer,",
+						"          empresa_sigla as string,",
+						"          nombre_producto as string,",
+						"          categoria as string,",
+						"          presentacion as string,",
+						"          estado as string",
+						"     ),",
+						"     deletable:false,",
+						"     insertable:true,",
+						"     updateable:false,",
+						"     upsertable:false,",
+						"     format: 'table',",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     errorHandlingOption: 'stopOnFirstError',",
+						"     mapColumn(",
+						"          producto_id,",
+						"          empresa_sigla,",
+						"          nombre_producto,",
+						"          categoria,",
+						"          presentacion,",
+						"          estado",
+						"     )) ~> sinkGoldDimProducto"
+					]
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/df_gold_dim_programa')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"folder": {
+					"name": "gold"
+				},
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "gold_dim_programa",
+								"type": "DatasetReference"
+							},
+							"name": "srcPrograma"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "gold_dim_programa",
+								"type": "DatasetReference"
+							},
+							"name": "sinkGoldDimPrograma"
+						}
+					],
+					"transformations": [],
+					"scriptLines": [
+						"source(output(",
+						"          programa_key as integer,",
+						"          codigo_programa as string,",
+						"          nombre_programa as string,",
+						"          canal_entrega as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     isolationLevel: 'READ_UNCOMMITTED',",
+						"     query: 'SELECT \\n    \\'SUP\\' AS codigo_programa,\\n    \\'Subsidio Universal Prenatal por la Vida\\' AS nombre_programa,\\n    \\'Establecimiento de salud\\' AS canal_entrega\\n\\nUNION ALL\\n\\nSELECT \\n    \\'SPL_AGENCIA\\' AS codigo_programa,\\n    \\'Subsidio Prenatal y de Lactancia\\' AS nombre_programa,\\n    \\'Agencia Distribuidora\\' AS canal_entrega\\n\\nUNION ALL\\n\\nSELECT \\n    \\'SPL_SUPERMERCADO\\' AS codigo_programa,\\n    \\'Subsidio Prenatal y de Lactancia\\' AS nombre_programa,\\n    \\'Supermercado autorizado\\' AS canal_entrega;',",
+						"     format: 'query') ~> srcPrograma",
+						"srcPrograma sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     input(",
+						"          programa_key as integer,",
+						"          codigo_programa as string,",
+						"          nombre_programa as string,",
+						"          canal_entrega as string",
+						"     ),",
+						"     deletable:false,",
+						"     insertable:true,",
+						"     updateable:false,",
+						"     upsertable:false,",
+						"     format: 'table',",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     errorHandlingOption: 'stopOnFirstError',",
+						"     mapColumn(",
+						"          codigo_programa,",
+						"          nombre_programa,",
+						"          canal_entrega",
+						"     )) ~> sinkGoldDimPrograma"
+					]
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/df_gold_dim_persona')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"folder": {
+					"name": "gold"
+				},
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "gold_dim_persona",
+								"type": "DatasetReference"
+							},
+							"name": "srcPersona"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "gold_dim_persona",
+								"type": "DatasetReference"
+							},
+							"name": "sinkGoldDimPersona"
+						}
+					],
+					"transformations": [],
+					"scriptLines": [
+						"source(output(",
+						"          persona_key as integer,",
+						"          ci as string,",
+						"          nombre_completo as string,",
+						"          nombres as string,",
+						"          apellido_paterno as string,",
+						"          apellido_materno as string,",
+						"          fecha_nacimiento as date,",
+						"          edad as integer,",
+						"          genero as string,",
+						"          estado_civil as string,",
+						"          numero_hijos as integer,",
+						"          profesion as string,",
+						"          nivel_estudios as string,",
+						"          municipio_residencia as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     isolationLevel: 'READ_UNCOMMITTED',",
+						"     query: 'SELECT\\n    ci,\\n    CONCAT(nombres, \\' \\', apellido_paterno, \\' \\', apellido_materno) AS nombre_completo,\\n    nombres,\\n    apellido_paterno,\\n    apellido_materno,\\n    fecha_nacimiento,\\n    DATEDIFF(YEAR, fecha_nacimiento, GETDATE()) AS edad,\\n    genero,\\n    estado_civil,\\n    numero_hijos,\\n    profesion,\\n    nivel_estudios,\\n    municipio_residencia\\nFROM silver.tbl_segip_personas;',",
+						"     format: 'query') ~> srcPersona",
+						"srcPersona sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     input(",
+						"          persona_key as integer,",
+						"          ci as string,",
+						"          nombre_completo as string,",
+						"          nombres as string,",
+						"          apellido_paterno as string,",
+						"          apellido_materno as string,",
+						"          fecha_nacimiento as date,",
+						"          edad as integer,",
+						"          genero as string,",
+						"          estado_civil as string,",
+						"          numero_hijos as integer,",
+						"          profesion as string,",
+						"          nivel_estudios as string,",
+						"          municipio_residencia as string",
+						"     ),",
+						"     deletable:false,",
+						"     insertable:true,",
+						"     updateable:false,",
+						"     upsertable:false,",
+						"     format: 'table',",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     errorHandlingOption: 'stopOnFirstError',",
+						"     mapColumn(",
+						"          ci,",
+						"          nombre_completo,",
+						"          nombres,",
+						"          apellido_paterno,",
+						"          apellido_materno,",
+						"          fecha_nacimiento,",
+						"          edad,",
+						"          genero,",
+						"          estado_civil,",
+						"          numero_hijos,",
+						"          profesion,",
+						"          nivel_estudios,",
+						"          municipio_residencia",
+						"     )) ~> sinkGoldDimPersona"
+					]
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/df_gold_dim_planta')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"folder": {
+					"name": "gold"
+				},
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "gold_dim_planta",
+								"type": "DatasetReference"
+							},
+							"name": "srcPlanta"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "gold_dim_planta",
+								"type": "DatasetReference"
+							},
+							"name": "sinkGoldPlanta"
+						}
+					],
+					"transformations": [],
+					"scriptLines": [
+						"source(output(",
+						"          planta_key as integer,",
+						"          planta_id as integer,",
+						"          empresa_sigla as string,",
+						"          empresa_nombre as string,",
+						"          planta_nombre as string,",
+						"          tipo_planta as string,",
+						"          municipio as string,",
+						"          departamento as string,",
+						"          estado_operativo as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     isolationLevel: 'READ_UNCOMMITTED',",
+						"     query: 'SELECT\\n    planta_id,\\n    empresa_sigla,\\n    empresa_nombre,\\n    planta_nombre,\\n    tipo_planta,\\n    municipio,\\n    departamento,\\n    estado_operativo\\nFROM silver.tbl_sedem_infraestructura;',",
+						"     format: 'query') ~> srcPlanta",
+						"srcPlanta sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     input(",
+						"          planta_key as integer,",
+						"          planta_id as integer,",
+						"          empresa_sigla as string,",
+						"          empresa_nombre as string,",
+						"          planta_nombre as string,",
+						"          tipo_planta as string,",
+						"          municipio as string,",
+						"          departamento as string,",
+						"          estado_operativo as string",
+						"     ),",
+						"     deletable:false,",
+						"     insertable:true,",
+						"     updateable:false,",
+						"     upsertable:false,",
+						"     format: 'table',",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     errorHandlingOption: 'stopOnFirstError',",
+						"     mapColumn(",
+						"          planta_id,",
+						"          empresa_sigla,",
+						"          empresa_nombre,",
+						"          planta_nombre,",
+						"          tipo_planta,",
+						"          municipio,",
+						"          departamento,",
+						"          estado_operativo",
+						"     )) ~> sinkGoldPlanta"
+					]
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/df_gold_dim_almacen')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"folder": {
+					"name": "gold"
+				},
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "gold_dim_almacen",
+								"type": "DatasetReference"
+							},
+							"name": "srcAlmacen"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "gold_dim_almacen",
+								"type": "DatasetReference"
+							},
+							"name": "sinkAlmacen"
+						}
+					],
+					"transformations": [],
+					"scriptLines": [
+						"source(output(",
+						"          almacen_key as integer,",
+						"          almacen_id as integer,",
+						"          nombre as string,",
+						"          municipio as string,",
+						"          departamento as string,",
+						"          capacidad_m3 as decimal(18,2)",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     isolationLevel: 'READ_UNCOMMITTED',",
+						"     query: 'SELECT\\n    almacen_id,\\n    nombre,\\n    municipio,\\n    departamento,\\n    capacidad_m3\\nFROM silver.tbl_agencia_almacenes;',",
+						"     format: 'query') ~> srcAlmacen",
+						"srcAlmacen sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     input(",
+						"          almacen_key as integer,",
+						"          almacen_id as integer,",
+						"          nombre as string,",
+						"          municipio as string,",
+						"          departamento as string,",
+						"          capacidad_m3 as decimal(18,2)",
+						"     ),",
+						"     deletable:false,",
+						"     insertable:true,",
+						"     updateable:false,",
+						"     upsertable:false,",
+						"     format: 'table',",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     errorHandlingOption: 'stopOnFirstError',",
+						"     mapColumn(",
+						"          almacen_id,",
+						"          nombre,",
+						"          municipio,",
+						"          departamento,",
+						"          capacidad_m3",
+						"     )) ~> sinkAlmacen"
+					]
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/df_gold_dim_establecimiento')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"folder": {
+					"name": "gold"
+				},
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "gold_dim_establecimiento",
+								"type": "DatasetReference"
+							},
+							"name": "srcEstablecimiento"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "gold_dim_establecimiento",
+								"type": "DatasetReference"
+							},
+							"name": "sinkEstablecimiento"
+						}
+					],
+					"transformations": [],
+					"scriptLines": [
+						"source(output(",
+						"          establecimiento_key as integer,",
+						"          establecimiento_id as integer,",
+						"          nombre as string,",
+						"          tipo as string,",
+						"          municipio as string,",
+						"          departamento as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     isolationLevel: 'READ_UNCOMMITTED',",
+						"     query: 'SELECT\\n    establecimiento_id,\\n    nombre,\\n    tipo,\\n    municipio,\\n    departamento\\nFROM silver.tbl_sup_establecimientos;',",
+						"     format: 'query') ~> srcEstablecimiento",
+						"srcEstablecimiento sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     input(",
+						"          establecimiento_key as integer,",
+						"          establecimiento_id as integer,",
+						"          nombre as string,",
+						"          tipo as string,",
+						"          municipio as string,",
+						"          departamento as string",
+						"     ),",
+						"     deletable:false,",
+						"     insertable:true,",
+						"     updateable:false,",
+						"     upsertable:false,",
+						"     format: 'table',",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     errorHandlingOption: 'stopOnFirstError',",
+						"     mapColumn(",
+						"          establecimiento_id,",
+						"          nombre,",
+						"          tipo,",
+						"          municipio,",
+						"          departamento",
+						"     )) ~> sinkEstablecimiento"
+					]
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/df_gold_dim_paquete')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"folder": {
+					"name": "gold"
+				},
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "gold_dim_paquete",
+								"type": "DatasetReference"
+							},
+							"name": "srcPaquete"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "gold_dim_paquete",
+								"type": "DatasetReference"
+							},
+							"name": "sinkPaquete"
+						}
+					],
+					"transformations": [],
+					"scriptLines": [
+						"source(output(",
+						"          paquete_key as integer,",
+						"          paquete_id as integer,",
+						"          nombre as string,",
+						"          peso_estandar_kg as decimal(18,2),",
+						"          costo_estimado_bs as decimal(18,2)",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     isolationLevel: 'READ_UNCOMMITTED',",
+						"     query: 'SELECT\\n    paquete_id,\\n    nombre,\\n    peso_estandar_kg,\\n    costo_estimado_bs\\nFROM silver.tbl_sup_paquetes;',",
+						"     format: 'query') ~> srcPaquete",
+						"srcPaquete sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     input(",
+						"          paquete_key as integer,",
+						"          paquete_id as integer,",
+						"          nombre as string,",
+						"          peso_estandar_kg as decimal(18,2),",
+						"          costo_estimado_bs as decimal(18,2)",
+						"     ),",
+						"     deletable:false,",
+						"     insertable:true,",
+						"     updateable:false,",
+						"     upsertable:false,",
+						"     format: 'table',",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     errorHandlingOption: 'stopOnFirstError',",
+						"     mapColumn(",
+						"          paquete_id,",
+						"          nombre,",
+						"          peso_estandar_kg,",
+						"          costo_estimado_bs",
+						"     )) ~> sinkPaquete"
+					]
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/df_gold_dim_empleador')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"folder": {
+					"name": "gold"
+				},
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "gold_dim_empleador",
+								"type": "DatasetReference"
+							},
+							"name": "srcEmpleador"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "gold_dim_empleador",
+								"type": "DatasetReference"
+							},
+							"name": "sinkEmpleador"
+						}
+					],
+					"transformations": [],
+					"scriptLines": [
+						"source(output(",
+						"          empleador_key as integer,",
+						"          empleador_id as integer,",
+						"          razon_social as string,",
+						"          tipo as string,",
+						"          municipio as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     isolationLevel: 'READ_UNCOMMITTED',",
+						"     query: 'SELECT\\n    empleador_id,\\n    razon_social,\\n    tipo,\\n    municipio\\nFROM silver.tbl_spl_empleadores;',",
+						"     format: 'query') ~> srcEmpleador",
+						"srcEmpleador sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     input(",
+						"          empleador_key as integer,",
+						"          empleador_id as integer,",
+						"          razon_social as string,",
+						"          tipo as string,",
+						"          municipio as string",
+						"     ),",
+						"     deletable:false,",
+						"     insertable:true,",
+						"     updateable:false,",
+						"     upsertable:false,",
+						"     format: 'table',",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     errorHandlingOption: 'stopOnFirstError',",
+						"     mapColumn(",
+						"          empleador_id,",
+						"          razon_social,",
+						"          tipo,",
+						"          municipio",
+						"     )) ~> sinkEmpleador"
+					]
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/df_gold_dim_supermercado')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"folder": {
+					"name": "gold"
+				},
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "gold_dim_supermercado",
+								"type": "DatasetReference"
+							},
+							"name": "srcSupermercado"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "gold_dim_supermercado",
+								"type": "DatasetReference"
+							},
+							"name": "sinkSupermercado"
+						}
+					],
+					"transformations": [],
+					"scriptLines": [
+						"source(output(",
+						"          supermercado_key as integer,",
+						"          supermercado_id as integer,",
+						"          cadena as string,",
+						"          sucursal as string,",
+						"          municipio as string,",
+						"          direccion as string,",
+						"          estado as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     isolationLevel: 'READ_UNCOMMITTED',",
+						"     query: 'SELECT\\n    supermercado_id,\\n    cadena,\\n    sucursal,\\n    municipio,\\n    direccion,\\n    estado\\nFROM silver.tbl_spl_supermercados;',",
+						"     format: 'query') ~> srcSupermercado",
+						"srcSupermercado sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     input(",
+						"          supermercado_key as integer,",
+						"          supermercado_id as integer,",
+						"          cadena as string,",
+						"          sucursal as string,",
+						"          municipio as string,",
+						"          direccion as string,",
+						"          estado as string",
+						"     ),",
+						"     deletable:false,",
+						"     insertable:true,",
+						"     updateable:false,",
+						"     upsertable:false,",
+						"     format: 'table',",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     errorHandlingOption: 'stopOnFirstError',",
+						"     mapColumn(",
+						"          supermercado_id,",
+						"          cadena,",
+						"          sucursal,",
+						"          municipio,",
+						"          direccion,",
+						"          estado",
+						"     )) ~> sinkSupermercado"
+					]
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/df_gold_dim_fecha')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"folder": {
+					"name": "gold"
+				},
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "gold_dim_fecha",
+								"type": "DatasetReference"
+							},
+							"name": "srcFecha"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "gold_dim_fecha",
+								"type": "DatasetReference"
+							},
+							"name": "sinkGoldDimFecha"
+						}
+					],
+					"transformations": [],
+					"scriptLines": [
+						"source(output(",
+						"          fecha_key as integer,",
+						"          fecha as date,",
+						"          anio as integer,",
+						"          mes as integer,",
+						"          nombre_mes as string,",
+						"          trimestre as integer,",
+						"          dia as integer",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     isolationLevel: 'READ_UNCOMMITTED',",
+						"     query: 'SELECT DISTINCT\\n    CONVERT(INT, CONVERT(CHAR(8), fecha, 112)) AS fecha_key,\\n    fecha,\\n    YEAR(fecha) AS anio,\\n    MONTH(fecha) AS mes,\\n    CASE MONTH(fecha)\\n        WHEN 1 THEN \\'Enero\\'\\n        WHEN 2 THEN \\'Febrero\\'\\n        WHEN 3 THEN \\'Marzo\\'\\n        WHEN 4 THEN \\'Abril\\'\\n        WHEN 5 THEN \\'Mayo\\'\\n        WHEN 6 THEN \\'Junio\\'\\n        WHEN 7 THEN \\'Julio\\'\\n        WHEN 8 THEN \\'Agosto\\'\\n        WHEN 9 THEN \\'Septiembre\\'\\n        WHEN 10 THEN \\'Octubre\\'\\n        WHEN 11 THEN \\'Noviembre\\'\\n        WHEN 12 THEN \\'Diciembre\\'\\n    END AS nombre_mes,\\n    DATEPART(QUARTER, fecha) AS trimestre,\\n    DAY(fecha) AS dia\\nFROM (\\n    SELECT fecha_produccion AS fecha FROM silver.tbl_sedem_produccion WHERE fecha_produccion IS NOT NULL\\n    UNION\\n    SELECT fecha_vencimiento FROM silver.tbl_sedem_produccion WHERE fecha_vencimiento IS NOT NULL\\n    UNION\\n    SELECT fecha_recepcion FROM silver.tbl_agencia_recepciones WHERE fecha_recepcion IS NOT NULL\\n    UNION\\n    SELECT fecha_despacho FROM silver.tbl_agencia_despachos WHERE fecha_despacho IS NOT NULL\\n    UNION\\n    SELECT fecha_llegada FROM silver.tbl_agencia_despachos WHERE fecha_llegada IS NOT NULL\\n    UNION\\n    SELECT fecha_emision_boleta FROM silver.tbl_sup_entregas WHERE fecha_emision_boleta IS NOT NULL\\n    UNION\\n    SELECT fecha_entrega FROM silver.tbl_sup_entregas WHERE fecha_entrega IS NOT NULL\\n    UNION\\n    SELECT fecha_entrega FROM silver.tbl_spl_entregas_agencia WHERE fecha_entrega IS NOT NULL\\n    UNION\\n    SELECT fecha_retiro FROM silver.tbl_spl_entregas_supermercado WHERE fecha_retiro IS NOT NULL\\n    UNION\\n    SELECT DATEFROMPARTS(gestion, mes, 1)\\n    FROM silver.tbl_spl_asignaciones\\n    WHERE mes BETWEEN 1 AND 12\\n) fechas;',",
+						"     format: 'query') ~> srcFecha",
+						"srcFecha sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     input(",
+						"          fecha_key as integer,",
+						"          fecha as date,",
+						"          anio as integer,",
+						"          mes as integer,",
+						"          nombre_mes as string,",
+						"          trimestre as integer,",
+						"          dia as integer",
+						"     ),",
+						"     deletable:false,",
+						"     insertable:true,",
+						"     updateable:false,",
+						"     upsertable:false,",
+						"     format: 'table',",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     errorHandlingOption: 'stopOnFirstError',",
+						"     mapColumn(",
+						"          fecha_key,",
+						"          fecha,",
+						"          anio,",
+						"          mes,",
+						"          nombre_mes,",
+						"          trimestre,",
+						"          dia",
+						"     )) ~> sinkGoldDimFecha"
+					]
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/df_gold_fact_produccion_sedem')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"folder": {
+					"name": "gold"
+				},
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "gold_fact_produccion_sedem",
+								"type": "DatasetReference"
+							},
+							"name": "srcFactProduccion"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "gold_fact_produccion_sedem",
+								"type": "DatasetReference"
+							},
+							"name": "sinkProduccion"
+						}
+					],
+					"transformations": [],
+					"scriptLines": [
+						"source(output(",
+						"          produccion_fact_key as integer,",
+						"          produccion_id as integer,",
+						"          fecha_key as integer,",
+						"          fecha_produccion as date,",
+						"          fecha_vencimiento as date,",
+						"          producto_key as integer,",
+						"          planta_key as integer,",
+						"          nro_lote as string,",
+						"          cantidad_producida as decimal(18,2),",
+						"          cantidad_despachada as decimal(18,2),",
+						"          costo_produccion_bs as decimal(18,2),",
+						"          unidad as string,",
+						"          estado as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     isolationLevel: 'READ_UNCOMMITTED',",
+						"     query: 'SELECT\\n    p.produccion_id,\\n    CONVERT(INT, CONVERT(CHAR(8), p.fecha_produccion, 112)) AS fecha_key,\\n    p.fecha_produccion,\\n    p.fecha_vencimiento,\\n    dp.producto_key,\\n    dpl.planta_key,\\n    p.nro_lote,\\n    p.cantidad_producida,\\n    p.cantidad_despachada,\\n    p.costo_produccion_bs,\\n    p.unidad,\\n    p.estado\\nFROM silver.tbl_sedem_produccion p\\nLEFT JOIN gold.dim_producto dp\\n    ON p.producto_id = dp.producto_id\\nLEFT JOIN gold.dim_planta dpl\\n    ON p.planta_id = dpl.planta_id;',",
+						"     format: 'query') ~> srcFactProduccion",
+						"srcFactProduccion sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     input(",
+						"          produccion_fact_key as integer,",
+						"          produccion_id as integer,",
+						"          fecha_key as integer,",
+						"          fecha_produccion as date,",
+						"          fecha_vencimiento as date,",
+						"          producto_key as integer,",
+						"          planta_key as integer,",
+						"          nro_lote as string,",
+						"          cantidad_producida as decimal(18,2),",
+						"          cantidad_despachada as decimal(18,2),",
+						"          costo_produccion_bs as decimal(18,2),",
+						"          unidad as string,",
+						"          estado as string",
+						"     ),",
+						"     deletable:false,",
+						"     insertable:true,",
+						"     updateable:false,",
+						"     upsertable:false,",
+						"     format: 'table',",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     errorHandlingOption: 'stopOnFirstError',",
+						"     mapColumn(",
+						"          produccion_id,",
+						"          fecha_key,",
+						"          fecha_produccion,",
+						"          fecha_vencimiento,",
+						"          producto_key,",
+						"          planta_key,",
+						"          nro_lote,",
+						"          cantidad_producida,",
+						"          cantidad_despachada,",
+						"          costo_produccion_bs,",
+						"          unidad,",
+						"          estado",
+						"     )) ~> sinkProduccion"
+					]
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/df_gold_fact_logistica_agencia')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"folder": {
+					"name": "gold"
+				},
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "gold_fact_logistica_agencia",
+								"type": "DatasetReference"
+							},
+							"name": "srcFactLogistica"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "gold_fact_logistica_agencia",
+								"type": "DatasetReference"
+							},
+							"name": "sinkLogisticaAgencia"
+						}
+					],
+					"transformations": [],
+					"scriptLines": [
+						"source(output(",
+						"          movimiento_fact_key as integer,",
+						"          tipo_movimiento as string,",
+						"          recepcion_id as integer,",
+						"          despacho_id as integer,",
+						"          fecha_key as integer,",
+						"          fecha_movimiento as date,",
+						"          almacen_key as integer,",
+						"          nro_lote as string,",
+						"          cantidad as decimal(18,2),",
+						"          condicion as string,",
+						"          centro_destino as string,",
+						"          estado as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     isolationLevel: 'READ_UNCOMMITTED',",
+						"     query: 'SELECT\\n    \\'RECEPCION\\' AS tipo_movimiento,\\n    r.recepcion_id,\\n    CAST(NULL AS INT) AS despacho_id,\\n    CONVERT(INT, CONVERT(CHAR(8), r.fecha_recepcion, 112)) AS fecha_key,\\n    r.fecha_recepcion AS fecha_movimiento,\\n    da.almacen_key,\\n    r.nro_lote,\\n    r.cantidad_recibida AS cantidad,\\n    r.condicion,\\n    CAST(NULL AS VARCHAR(200)) AS centro_destino,\\n    r.estado\\nFROM silver.tbl_agencia_recepciones r\\nLEFT JOIN gold.dim_almacen da\\n    ON r.almacen_id = da.almacen_id\\n\\nUNION ALL\\n\\nSELECT\\n    \\'DESPACHO\\' AS tipo_movimiento,\\n    d.recepcion_id,\\n    d.despacho_id,\\n    CONVERT(INT, CONVERT(CHAR(8), d.fecha_despacho, 112)) AS fecha_key,\\n    d.fecha_despacho AS fecha_movimiento,\\n    da.almacen_key,\\n    d.nro_lote,\\n    d.cantidad_despachada AS cantidad,\\n    CAST(NULL AS VARCHAR(150)) AS condicion,\\n    d.centro_destino,\\n    d.estado\\nFROM silver.tbl_agencia_despachos d\\nLEFT JOIN gold.dim_almacen da\\n    ON d.almacen_id = da.almacen_id;',",
+						"     format: 'query') ~> srcFactLogistica",
+						"srcFactLogistica sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     input(",
+						"          movimiento_fact_key as integer,",
+						"          tipo_movimiento as string,",
+						"          recepcion_id as integer,",
+						"          despacho_id as integer,",
+						"          fecha_key as integer,",
+						"          fecha_movimiento as date,",
+						"          almacen_key as integer,",
+						"          nro_lote as string,",
+						"          cantidad as decimal(18,2),",
+						"          condicion as string,",
+						"          centro_destino as string,",
+						"          estado as string",
+						"     ),",
+						"     deletable:false,",
+						"     insertable:true,",
+						"     updateable:false,",
+						"     upsertable:false,",
+						"     format: 'table',",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     errorHandlingOption: 'stopOnFirstError',",
+						"     mapColumn(",
+						"          tipo_movimiento,",
+						"          recepcion_id,",
+						"          despacho_id,",
+						"          fecha_key,",
+						"          fecha_movimiento,",
+						"          almacen_key,",
+						"          nro_lote,",
+						"          cantidad,",
+						"          condicion,",
+						"          centro_destino,",
+						"          estado",
+						"     )) ~> sinkLogisticaAgencia"
+					]
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/df_gold_fact_asignaciones_spl')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"folder": {
+					"name": "gold"
+				},
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "gold_fact_asignaciones_spl",
+								"type": "DatasetReference"
+							},
+							"name": "srcFactAsignaciones"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "gold_fact_asignaciones_spl",
+								"type": "DatasetReference"
+							},
+							"name": "sinkAsignacionesSpl"
+						}
+					],
+					"transformations": [],
+					"scriptLines": [
+						"source(output(",
+						"          asignacion_fact_key as integer,",
+						"          asignacion_id as integer,",
+						"          fecha_key as integer,",
+						"          persona_key as integer,",
+						"          empleador_key as integer,",
+						"          mes as integer,",
+						"          gestion as integer,",
+						"          monto_bs as decimal(18,2),",
+						"          monto_productos as decimal(18,2),",
+						"          tipo_subsidio as string,",
+						"          estado as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     isolationLevel: 'READ_UNCOMMITTED',",
+						"     query: 'SELECT\\n    a.asignacion_id,\\n    (a.gestion * 10000) + (a.mes * 100) + 1 AS fecha_key,\\n    dp.persona_key,\\n    de.empleador_key,\\n    a.mes,\\n    a.gestion,\\n    a.monto_bs,\\n    a.monto_productos,\\n    a.tipo_subsidio,\\n    a.estado\\nFROM silver.tbl_spl_asignaciones a\\nLEFT JOIN gold.dim_persona dp\\n    ON a.ci_beneficiaria = dp.ci\\nLEFT JOIN gold.dim_empleador de\\n    ON a.empleador_id = de.empleador_id;',",
+						"     format: 'query') ~> srcFactAsignaciones",
+						"srcFactAsignaciones sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     input(",
+						"          asignacion_fact_key as integer,",
+						"          asignacion_id as integer,",
+						"          fecha_key as integer,",
+						"          persona_key as integer,",
+						"          empleador_key as integer,",
+						"          mes as integer,",
+						"          gestion as integer,",
+						"          monto_bs as decimal(18,2),",
+						"          monto_productos as decimal(18,2),",
+						"          tipo_subsidio as string,",
+						"          estado as string",
+						"     ),",
+						"     deletable:false,",
+						"     insertable:true,",
+						"     updateable:false,",
+						"     upsertable:false,",
+						"     format: 'table',",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     errorHandlingOption: 'stopOnFirstError',",
+						"     mapColumn(",
+						"          asignacion_id,",
+						"          fecha_key,",
+						"          persona_key,",
+						"          empleador_key,",
+						"          mes,",
+						"          gestion,",
+						"          monto_bs,",
+						"          monto_productos,",
+						"          tipo_subsidio,",
+						"          estado",
+						"     )) ~> sinkAsignacionesSpl"
+					]
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/df_gold_fact_entregas_subsidio')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"folder": {
+					"name": "gold"
+				},
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "gold_fact_entregas_subsidio",
+								"type": "DatasetReference"
+							},
+							"name": "srcFactEntregas"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "gold_fact_entregas_subsidio",
+								"type": "DatasetReference"
+							},
+							"name": "sinkEntregasSubsidio"
+						}
+					],
+					"transformations": [],
+					"scriptLines": [
+						"source(output(",
+						"          entrega_fact_key as integer,",
+						"          programa_key as integer,",
+						"          entrega_origen_id as integer,",
+						"          asignacion_id as integer,",
+						"          fecha_key as integer,",
+						"          fecha_entrega as date,",
+						"          persona_key as integer,",
+						"          establecimiento_key as integer,",
+						"          paquete_key as integer,",
+						"          empleador_key as integer,",
+						"          supermercado_key as integer,",
+						"          lote as string,",
+						"          producto_descripcion as string,",
+						"          cantidad_entregas as integer,",
+						"          peso_kg as decimal(18,2),",
+						"          cantidad_kg as decimal(18,2),",
+						"          monto_bs as decimal(18,2),",
+						"          costo_estimado_bs as decimal(18,2),",
+						"          estado as string,",
+						"          canal_entrega as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     isolationLevel: 'READ_UNCOMMITTED',",
+						"     query: 'SELECT\\n    pr.programa_key,\\n    e.entrega_id AS entrega_origen_id,\\n    CAST(NULL AS INT) AS asignacion_id,\\n    CONVERT(INT, CONVERT(CHAR(8), e.fecha_entrega, 112)) AS fecha_key,\\n    e.fecha_entrega,\\n    dp.persona_key,\\n    de.establecimiento_key,\\n    dpaq.paquete_key,\\n    CAST(NULL AS INT) AS empleador_key,\\n    CAST(NULL AS INT) AS supermercado_key,\\n    e.lote_produccion AS lote,\\n    dpaq.nombre AS producto_descripcion,\\n    1 AS cantidad_entregas,\\n    dpaq.peso_estandar_kg AS peso_kg,\\n    CAST(NULL AS DECIMAL(18,2)) AS cantidad_kg,\\n    CAST(NULL AS DECIMAL(18,2)) AS monto_bs,\\n    dpaq.costo_estimado_bs,\\n    e.estado,\\n    \\'Establecimiento de salud\\' AS canal_entrega\\nFROM silver.tbl_sup_entregas e\\nLEFT JOIN gold.dim_programa pr\\n    ON pr.codigo_programa = \\'SUP\\'\\nLEFT JOIN gold.dim_persona dp\\n    ON e.ci_beneficiaria = dp.ci\\nLEFT JOIN gold.dim_establecimiento de\\n    ON e.establecimiento_id = de.establecimiento_id\\nLEFT JOIN gold.dim_paquete dpaq\\n    ON e.paquete_id = dpaq.paquete_id\\n\\nUNION ALL\\n\\nSELECT\\n    pr.programa_key,\\n    e.entrega_ag_id AS entrega_origen_id,\\n    e.asignacion_id,\\n    CONVERT(INT, CONVERT(CHAR(8), e.fecha_entrega, 112)) AS fecha_key,\\n    e.fecha_entrega,\\n    dp.persona_key,\\n    CAST(NULL AS INT) AS establecimiento_key,\\n    CAST(NULL AS INT) AS paquete_key,\\n    dem.empleador_key,\\n    CAST(NULL AS INT) AS supermercado_key,\\n    e.lote,\\n    e.productos AS producto_descripcion,\\n    1 AS cantidad_entregas,\\n    e.peso_kg,\\n    CAST(NULL AS DECIMAL(18,2)) AS cantidad_kg,\\n    a.monto_productos AS monto_bs,\\n    CAST(NULL AS DECIMAL(18,2)) AS costo_estimado_bs,\\n    a.estado,\\n    \\'Agencia Distribuidora\\' AS canal_entrega\\nFROM silver.tbl_spl_entregas_agencia e\\nLEFT JOIN silver.tbl_spl_asignaciones a\\n    ON e.asignacion_id = a.asignacion_id\\nLEFT JOIN gold.dim_programa pr\\n    ON pr.codigo_programa = \\'SPL_AGENCIA\\'\\nLEFT JOIN gold.dim_persona dp\\n    ON e.ci_beneficiaria = dp.ci\\nLEFT JOIN gold.dim_empleador dem\\n    ON a.empleador_id = dem.empleador_id\\n\\nUNION ALL\\n\\nSELECT\\n    pr.programa_key,\\n    e.entrega_super_id AS entrega_origen_id,\\n    e.asignacion_id,\\n    CONVERT(INT, CONVERT(CHAR(8), e.fecha_retiro, 112)) AS fecha_key,\\n    e.fecha_retiro AS fecha_entrega,\\n    dp.persona_key,\\n    CAST(NULL AS INT) AS establecimiento_key,\\n    CAST(NULL AS INT) AS paquete_key,\\n    dem.empleador_key,\\n    ds.supermercado_key,\\n    CAST(NULL AS VARCHAR(100)) AS lote,\\n    e.tipo_carne AS producto_descripcion,\\n    1 AS cantidad_entregas,\\n    CAST(NULL AS DECIMAL(18,2)) AS peso_kg,\\n    e.cantidad_kg,\\n    e.monto_bs,\\n    CAST(NULL AS DECIMAL(18,2)) AS costo_estimado_bs,\\n    CAST(NULL AS VARCHAR(100)) AS estado,\\n    \\'Supermercado autorizado\\' AS canal_entrega\\nFROM silver.tbl_spl_entregas_supermercado e\\nLEFT JOIN silver.tbl_spl_asignaciones a\\n    ON e.asignacion_id = a.asignacion_id\\nLEFT JOIN gold.dim_programa pr\\n    ON pr.codigo_programa = \\'SPL_SUPERMERCADO\\'\\nLEFT JOIN gold.dim_persona dp\\n    ON e.ci_beneficiaria = dp.ci\\nLEFT JOIN gold.dim_empleador dem\\n    ON a.empleador_id = dem.empleador_id\\nLEFT JOIN gold.dim_supermercado ds\\n    ON e.supermercado_id = ds.supermercado_id;',",
+						"     format: 'query') ~> srcFactEntregas",
+						"srcFactEntregas sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     input(",
+						"          entrega_fact_key as integer,",
+						"          programa_key as integer,",
+						"          entrega_origen_id as integer,",
+						"          asignacion_id as integer,",
+						"          fecha_key as integer,",
+						"          fecha_entrega as date,",
+						"          persona_key as integer,",
+						"          establecimiento_key as integer,",
+						"          paquete_key as integer,",
+						"          empleador_key as integer,",
+						"          supermercado_key as integer,",
+						"          lote as string,",
+						"          producto_descripcion as string,",
+						"          cantidad_entregas as integer,",
+						"          peso_kg as decimal(18,2),",
+						"          cantidad_kg as decimal(18,2),",
+						"          monto_bs as decimal(18,2),",
+						"          costo_estimado_bs as decimal(18,2),",
+						"          estado as string,",
+						"          canal_entrega as string",
+						"     ),",
+						"     deletable:false,",
+						"     insertable:true,",
+						"     updateable:false,",
+						"     upsertable:false,",
+						"     format: 'table',",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     errorHandlingOption: 'stopOnFirstError',",
+						"     mapColumn(",
+						"          programa_key,",
+						"          entrega_origen_id,",
+						"          asignacion_id,",
+						"          fecha_key,",
+						"          fecha_entrega,",
+						"          persona_key,",
+						"          establecimiento_key,",
+						"          paquete_key,",
+						"          empleador_key,",
+						"          supermercado_key,",
+						"          lote,",
+						"          producto_descripcion,",
+						"          cantidad_entregas,",
+						"          peso_kg,",
+						"          cantidad_kg,",
+						"          monto_bs,",
+						"          costo_estimado_bs,",
+						"          estado,",
+						"          canal_entrega",
+						"     )) ~> sinkEntregasSubsidio"
+					]
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/pl_carga_gold')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "act_limpiar_gold",
+						"type": "Script",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"linkedServiceName": {
+							"referenceName": "dw_subsiduios",
+							"type": "LinkedServiceReference"
+						},
+						"typeProperties": {
+							"scripts": [
+								{
+									"type": "Query",
+									"text": "DELETE FROM gold.fact_entregas_subsidio;\nDELETE FROM gold.fact_logistica_agencia;\nDELETE FROM gold.fact_produccion_sedem;\nDELETE FROM gold.fact_asignaciones_spl;\n\nDELETE FROM gold.dim_fecha;\nDELETE FROM gold.dim_persona;\nDELETE FROM gold.dim_programa;\nDELETE FROM gold.dim_producto;\nDELETE FROM gold.dim_planta;\nDELETE FROM gold.dim_almacen;\nDELETE FROM gold.dim_establecimiento;\nDELETE FROM gold.dim_paquete;\nDELETE FROM gold.dim_empleador;\nDELETE FROM gold.dim_supermercado;"
+								}
+							],
+							"scriptBlockExecutionTimeout": "02:00:00"
+						}
+					},
+					{
+						"name": "act_df_gold_dim_programa",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [
+							{
+								"activity": "act_limpiar_gold",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "df_gold_dim_programa",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"srcPrograma": {},
+									"sinkGoldDimPrograma": {}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					},
+					{
+						"name": "act_df_gold_dim_persona",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [
+							{
+								"activity": "act_df_gold_dim_programa",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "df_gold_dim_persona",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"srcPersona": {},
+									"sinkGoldDimPersona": {}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					},
+					{
+						"name": "act_df_gold_dim_producto",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [
+							{
+								"activity": "act_df_gold_dim_persona",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "df_gold_dim_producto",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"srcSilverProductos": {},
+									"sinkGoldDimProducto": {}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					},
+					{
+						"name": "act_df_gold_dim_fecha",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [
+							{
+								"activity": "act_df_gold_dim_producto",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "df_gold_dim_fecha",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"srcFecha": {},
+									"sinkGoldDimFecha": {}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					},
+					{
+						"name": "act_df_gold_dim_planta",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [
+							{
+								"activity": "act_df_gold_dim_fecha",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "df_gold_dim_planta",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"srcPlanta": {},
+									"sinkGoldPlanta": {}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					},
+					{
+						"name": "act_df_gold_dim_almacen",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [
+							{
+								"activity": "act_df_gold_dim_planta",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "df_gold_dim_almacen",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"srcAlmacen": {},
+									"sinkAlmacen": {}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					},
+					{
+						"name": "act_df_gold_dim_establecimiento",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [
+							{
+								"activity": "act_df_gold_dim_almacen",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "df_gold_dim_establecimiento",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"srcEstablecimiento": {},
+									"sinkEstablecimiento": {}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					},
+					{
+						"name": "act_df_gold_dim_paquete",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [
+							{
+								"activity": "act_df_gold_dim_establecimiento",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "df_gold_dim_paquete",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"srcPaquete": {},
+									"sinkPaquete": {}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					},
+					{
+						"name": "act_df_gold_dim_empleador",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [
+							{
+								"activity": "act_df_gold_dim_paquete",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "df_gold_dim_empleador",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"srcEmpleador": {},
+									"sinkEmpleador": {}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					},
+					{
+						"name": "act_df_gold_dim_supermercado",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [
+							{
+								"activity": "act_df_gold_dim_empleador",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "df_gold_dim_supermercado",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"srcSupermercado": {},
+									"sinkSupermercado": {}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					},
+					{
+						"name": "act_df_gold_fact_produccion_sedem",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [
+							{
+								"activity": "act_df_gold_dim_supermercado",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "df_gold_fact_produccion_sedem",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"srcFactProduccion": {},
+									"sinkProduccion": {}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					},
+					{
+						"name": "act_df_gold_fact_logistica_agencia",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [
+							{
+								"activity": "act_df_gold_fact_produccion_sedem",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "df_gold_fact_logistica_agencia",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"srcFactLogistica": {},
+									"sinkLogisticaAgencia": {}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					},
+					{
+						"name": "act_df_gold_fact_asignaciones_spl",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [
+							{
+								"activity": "act_df_gold_fact_logistica_agencia",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "df_gold_fact_asignaciones_spl",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"srcFactAsignaciones": {},
+									"sinkAsignacionesSpl": {}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					},
+					{
+						"name": "act_df_gold_fact_entregas_subsidio",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [
+							{
+								"activity": "act_df_gold_fact_asignaciones_spl",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "df_gold_fact_entregas_subsidio",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"srcFactEntregas": {},
+									"sinkEntregasSubsidio": {}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/dataflows/df_gold_dim_programa')]",
+				"[concat(variables('factoryId'), '/dataflows/df_gold_dim_persona')]",
+				"[concat(variables('factoryId'), '/dataflows/df_gold_dim_producto')]",
+				"[concat(variables('factoryId'), '/dataflows/df_gold_dim_fecha')]",
+				"[concat(variables('factoryId'), '/dataflows/df_gold_dim_planta')]",
+				"[concat(variables('factoryId'), '/dataflows/df_gold_dim_almacen')]",
+				"[concat(variables('factoryId'), '/dataflows/df_gold_dim_establecimiento')]",
+				"[concat(variables('factoryId'), '/dataflows/df_gold_dim_paquete')]",
+				"[concat(variables('factoryId'), '/dataflows/df_gold_dim_empleador')]",
+				"[concat(variables('factoryId'), '/dataflows/df_gold_dim_supermercado')]",
+				"[concat(variables('factoryId'), '/dataflows/df_gold_fact_produccion_sedem')]",
+				"[concat(variables('factoryId'), '/dataflows/df_gold_fact_logistica_agencia')]",
+				"[concat(variables('factoryId'), '/dataflows/df_gold_fact_asignaciones_spl')]",
+				"[concat(variables('factoryId'), '/dataflows/df_gold_fact_entregas_subsidio')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/pl_carga_silver')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "act_silver_segip_personas",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "df_silver_segip_personas",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"source1": {},
+									"sink1": {}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					},
+					{
+						"name": "act_silver_sedem_infraestructura_productos",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [
+							{
+								"activity": "act_silver_segip_personas",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "df_silver_sedem_infraestructura_productos",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"source1": {},
+									"source2": {},
+									"source3": {},
+									"sink1": {},
+									"sink2": {}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					},
+					{
+						"name": "df_silver_sedem_produccion",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [
+							{
+								"activity": "act_silver_sedem_infraestructura_productos",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "df_silver_sedem_produccion",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"produccion": {},
+									"inventario": {},
+									"sink1": {}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					},
+					{
+						"name": "df_silver_agencia_logistica",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [
+							{
+								"activity": "df_silver_sedem_produccion",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "df_silver_agencia_logistica",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"almacenes": {},
+									"recepciones": {},
+									"despachos": {},
+									"sink1": {},
+									"sink2": {},
+									"sink3": {}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					},
+					{
+						"name": "df_silver_subsidio_universal",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [
+							{
+								"activity": "df_silver_agencia_logistica",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "df_silver_subsidio_universal",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"establecimientos": {},
+									"catalogo": {},
+									"boletas": {},
+									"entregas": {},
+									"sink1": {},
+									"sink2": {},
+									"sink3": {}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					},
+					{
+						"name": "df_silver_subsidio_lactancia",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [
+							{
+								"activity": "df_silver_subsidio_universal",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "df_silver_subsidio_lactancia",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"empleadores": {},
+									"afiliaciones": {},
+									"asignacionesmensuales": {},
+									"sink1": {},
+									"sink2": {}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					},
+					{
+						"name": "df_silver_spl_entregas",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [
+							{
+								"activity": "df_silver_subsidio_lactancia",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "df_silver_spl_entregas",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"entregasagencias": {},
+									"entregassupermercado": {},
+									"sink1": {},
+									"sink2": {}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/dataflows/df_silver_subsidio_universal')]"
+			]
+		}
+	]
+}

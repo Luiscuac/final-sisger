@@ -1,0 +1,79 @@
+{
+	"name": "gold_dim_planta",
+	"properties": {
+		"folder": {
+			"name": "gold"
+		},
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "gold_dim_planta",
+						"type": "DatasetReference"
+					},
+					"name": "srcPlanta"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "gold_dim_planta",
+						"type": "DatasetReference"
+					},
+					"name": "sinkGoldPlanta"
+				}
+			],
+			"transformations": [],
+			"scriptLines": [
+				"source(output(",
+				"          planta_key as integer,",
+				"          planta_id as integer,",
+				"          empresa_sigla as string,",
+				"          empresa_nombre as string,",
+				"          planta_nombre as string,",
+				"          tipo_planta as string,",
+				"          municipio as string,",
+				"          departamento as string,",
+				"          estado_operativo as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     query: 'SELECT\\n    planta_id,\\n    empresa_sigla,\\n    empresa_nombre,\\n    planta_nombre,\\n    tipo_planta,\\n    municipio,\\n    departamento,\\n    estado_operativo\\nFROM silver.tbl_sedem_infraestructura;',",
+				"     format: 'query') ~> srcPlanta",
+				"srcPlanta sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          planta_key as integer,",
+				"          planta_id as integer,",
+				"          empresa_sigla as string,",
+				"          empresa_nombre as string,",
+				"          planta_nombre as string,",
+				"          tipo_planta as string,",
+				"          municipio as string,",
+				"          departamento as string,",
+				"          estado_operativo as string",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     mapColumn(",
+				"          planta_id,",
+				"          empresa_sigla,",
+				"          empresa_nombre,",
+				"          planta_nombre,",
+				"          tipo_planta,",
+				"          municipio,",
+				"          departamento,",
+				"          estado_operativo",
+				"     )) ~> sinkGoldPlanta"
+			]
+		}
+	}
+}

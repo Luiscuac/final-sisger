@@ -1,5 +1,5 @@
 {
-	"name": "AzureSqlTable1",
+	"name": "gold_fact_produccion_sedem",
 	"properties": {
 		"linkedServiceName": {
 			"referenceName": "dw_subsiduios",

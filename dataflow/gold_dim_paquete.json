@@ -1,0 +1,66 @@
+{
+	"name": "gold_dim_paquete",
+	"properties": {
+		"folder": {
+			"name": "gold"
+		},
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "gold_dim_paquete",
+						"type": "DatasetReference"
+					},
+					"name": "srcPaquete"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "gold_dim_paquete",
+						"type": "DatasetReference"
+					},
+					"name": "sinkPaquete"
+				}
+			],
+			"transformations": [],
+			"scriptLines": [
+				"source(output(",
+				"          paquete_key as integer,",
+				"          paquete_id as integer,",
+				"          nombre as string,",
+				"          peso_estandar_kg as decimal(18,2),",
+				"          costo_estimado_bs as decimal(18,2)",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> srcPaquete",
+				"srcPaquete sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          paquete_key as integer,",
+				"          paquete_id as integer,",
+				"          nombre as string,",
+				"          peso_estandar_kg as decimal(18,2),",
+				"          costo_estimado_bs as decimal(18,2)",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     mapColumn(",
+				"          paquete_id,",
+				"          nombre,",
+				"          peso_estandar_kg,",
+				"          costo_estimado_bs",
+				"     )) ~> sinkPaquete"
+			]
+		}
+	}
+}

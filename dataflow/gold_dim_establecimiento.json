@@ -1,0 +1,70 @@
+{
+	"name": "gold_dim_establecimiento",
+	"properties": {
+		"folder": {
+			"name": "gold"
+		},
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "gold_dim_establecimiento",
+						"type": "DatasetReference"
+					},
+					"name": "srcEstablecimiento"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "gold_dim_establecimiento",
+						"type": "DatasetReference"
+					},
+					"name": "sinkEstablecimiento"
+				}
+			],
+			"transformations": [],
+			"scriptLines": [
+				"source(output(",
+				"          establecimiento_key as integer,",
+				"          establecimiento_id as integer,",
+				"          nombre as string,",
+				"          tipo as string,",
+				"          municipio as string,",
+				"          departamento as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     query: 'SELECT\\n    establecimiento_id,\\n    nombre,\\n    tipo,\\n    municipio,\\n    departamento\\nFROM silver.tbl_sup_establecimientos;',",
+				"     format: 'query') ~> srcEstablecimiento",
+				"srcEstablecimiento sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          establecimiento_key as integer,",
+				"          establecimiento_id as integer,",
+				"          nombre as string,",
+				"          tipo as string,",
+				"          municipio as string,",
+				"          departamento as string",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     mapColumn(",
+				"          establecimiento_id,",
+				"          nombre,",
+				"          tipo,",
+				"          municipio,",
+				"          departamento",
+				"     )) ~> sinkEstablecimiento"
+			]
+		}
+	}
+}

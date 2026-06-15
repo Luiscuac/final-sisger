@@ -1,0 +1,73 @@
+{
+	"name": "gold_dim_supermercado",
+	"properties": {
+		"folder": {
+			"name": "gold"
+		},
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "gold_dim_supermercado",
+						"type": "DatasetReference"
+					},
+					"name": "srcSupermercado"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "gold_dim_supermercado",
+						"type": "DatasetReference"
+					},
+					"name": "sinkSupermercado"
+				}
+			],
+			"transformations": [],
+			"scriptLines": [
+				"source(output(",
+				"          supermercado_key as integer,",
+				"          supermercado_id as integer,",
+				"          cadena as string,",
+				"          sucursal as string,",
+				"          municipio as string,",
+				"          direccion as string,",
+				"          estado as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     query: 'SELECT\\n    supermercado_id,\\n    cadena,\\n    sucursal,\\n    municipio,\\n    direccion,\\n    estado\\nFROM silver.tbl_spl_supermercados;',",
+				"     format: 'query') ~> srcSupermercado",
+				"srcSupermercado sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          supermercado_key as integer,",
+				"          supermercado_id as integer,",
+				"          cadena as string,",
+				"          sucursal as string,",
+				"          municipio as string,",
+				"          direccion as string,",
+				"          estado as string",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     mapColumn(",
+				"          supermercado_id,",
+				"          cadena,",
+				"          sucursal,",
+				"          municipio,",
+				"          direccion,",
+				"          estado",
+				"     )) ~> sinkSupermercado"
+			]
+		}
+	}
+}

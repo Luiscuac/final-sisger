@@ -1,0 +1,61 @@
+{
+	"name": "gold_dim_empleador",
+	"properties": {
+		"folder": {
+			"name": "gold"
+		},
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "gold_dim_empleador",
+						"type": "DatasetReference"
+					},
+					"name": "srcEmpleador"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "gold_dim_empleador",
+						"type": "DatasetReference"
+					},
+					"name": "sinkEmpleador"
+				}
+			],
+			"transformations": [],
+			"scriptLines": [
+				"source(output(",
+				"          empleador_key as integer,",
+				"          empleador_id as integer,",
+				"          razon_social as string,",
+				"          tipo as string,",
+				"          municipio as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     query: 'SELECT\\n    empleador_id,\\n    razon_social,\\n    tipo,\\n    municipio\\nFROM silver.tbl_spl_empleadores;',",
+				"     format: 'query') ~> srcEmpleador",
+				"srcEmpleador sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          empleador_key as integer,",
+				"          empleador_id as integer,",
+				"          razon_social as string,",
+				"          tipo as string,",
+				"          municipio as string",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError') ~> sinkEmpleador"
+			]
+		}
+	}
+}

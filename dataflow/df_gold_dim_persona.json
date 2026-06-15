@@ -45,7 +45,7 @@
 				"     allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     isolationLevel: 'READ_UNCOMMITTED',",
-				"     query: 'SELECT\\n    ci,\\n    CONCAT(nombres, \\' \\', apellido_paterno, \\' \\', apellido_materno) AS nombre_completo,\\n    nombres,\\n    apellido_paterno,\\n    apellido_materno,\\n    fecha_nacimiento,\\n    DATEDIFF(YEAR, fecha_nacimiento, GETDATE()) AS edad,\\n    genero,\\n    estado_civil,\\n    numero_hijos,\\n    profesion,\\n    nivel_estudios,\\n    municipio_residencia\\nFROM silver.tbl_segip_personas;',",
+				"     query: 'SELECT\\n    ci,\\n    CONCAT(nombres, \\' \\', apellido_paterno, \\' \\', apellido_materno) AS nombre_completo,\\n    nombres,\\n    apellido_paterno,\\n    apellido_materno,\\n    fecha_nacimiento,\\n    DATEDIFF(YEAR, fecha_nacimiento, GETDATE()) AS edad,\\n    genero,\\n    estado_civil,\\n    numero_hijos,\\n    profesion,\\n    nivel_estudios,\\n    municipio_residencia\\nFROM silver.tbl_segip_personas',",
 				"     format: 'query') ~> srcPersona",
 				"srcPersona sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",

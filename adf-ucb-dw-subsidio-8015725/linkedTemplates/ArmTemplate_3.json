@@ -412,7 +412,7 @@
 						"     allowSchemaDrift: true,",
 						"     validateSchema: false,",
 						"     isolationLevel: 'READ_UNCOMMITTED',",
-						"     query: 'SELECT \\n    \\'SUP\\' AS codigo_programa,\\n    \\'Subsidio Universal Prenatal por la Vida\\' AS nombre_programa,\\n    \\'Establecimiento de salud\\' AS canal_entrega\\n\\nUNION ALL\\n\\nSELECT \\n    \\'SPL_AGENCIA\\' AS codigo_programa,\\n    \\'Subsidio Prenatal y de Lactancia\\' AS nombre_programa,\\n    \\'Agencia Distribuidora\\' AS canal_entrega\\n\\nUNION ALL\\n\\nSELECT \\n    \\'SPL_SUPERMERCADO\\' AS codigo_programa,\\n    \\'Subsidio Prenatal y de Lactancia\\' AS nombre_programa,\\n    \\'Supermercado autorizado\\' AS canal_entrega;',",
+						"     query: 'SELECT\\n    CAST(codigo_programa AS VARCHAR(50)) AS codigo_programa,\\n    CAST(nombre_programa AS VARCHAR(200)) AS nombre_programa,\\n    CAST(canal_entrega AS VARCHAR(150)) AS canal_entrega\\nFROM (\\n    VALUES\\n    (\\'SUP\\', \\'Subsidio Universal Prenatal por la Vida\\', \\'Establecimiento de salud\\'),\\n    (\\'SPL_AGENCIA\\', \\'Subsidio Prenatal y de Lactancia\\', \\'Agencia Distribuidora\\'),\\n    (\\'SPL_SUPERMERCADO\\', \\'Subsidio Prenatal y de Lactancia\\', \\'Supermercado autorizado\\')\\n) AS programas(codigo_programa, nombre_programa, canal_entrega)',",
 						"     format: 'query') ~> srcPrograma",
 						"srcPrograma sink(allowSchemaDrift: true,",
 						"     validateSchema: false,",

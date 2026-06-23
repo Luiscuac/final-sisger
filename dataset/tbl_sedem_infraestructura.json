@@ -49,5 +49,6 @@
 			"schema": "silver",
 			"table": "tbl_sedem_infraestructura"
 		}
-	}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
 }

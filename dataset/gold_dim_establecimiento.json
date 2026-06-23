@@ -42,5 +42,6 @@
 			"schema": "gold",
 			"table": "dim_establecimiento"
 		}
-	}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
 }

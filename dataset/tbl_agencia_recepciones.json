@@ -48,5 +48,6 @@
 			"schema": "silver",
 			"table": "tbl_agencia_recepciones"
 		}
-	}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
 }

@@ -33,5 +33,6 @@
 			"schema": "silver",
 			"table": "tbl_spl_empleadores"
 		}
-	}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
 }

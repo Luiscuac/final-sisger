@@ -44,5 +44,6 @@
 			"schema": "gold",
 			"table": "dim_almacen"
 		}
-	}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
 }

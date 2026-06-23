@@ -71,5 +71,6 @@
 			"schema": "gold",
 			"table": "fact_logistica_agencia"
 		}
-	}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
 }

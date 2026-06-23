@@ -56,5 +56,6 @@
 			"schema": "silver",
 			"table": "tbl_sup_entregas"
 		}
-	}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
 }

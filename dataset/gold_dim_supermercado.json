@@ -46,5 +46,6 @@
 			"schema": "gold",
 			"table": "dim_supermercado"
 		}
-	}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
 }

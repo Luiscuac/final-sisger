@@ -46,5 +46,6 @@
 			"schema": "gold",
 			"table": "dim_producto"
 		}
-	}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
 }

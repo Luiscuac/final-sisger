@@ -71,5 +71,6 @@
 			"schema": "gold",
 			"table": "fact_asignaciones_spl"
 		}
-	}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
 }

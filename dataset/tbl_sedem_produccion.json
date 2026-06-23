@@ -69,5 +69,6 @@
 			"schema": "silver",
 			"table": "tbl_sedem_produccion"
 		}
-	}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
 }

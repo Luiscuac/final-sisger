@@ -60,5 +60,6 @@
 			"schema": "silver",
 			"table": "tbl_spl_asignaciones"
 		}
-	}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
 }

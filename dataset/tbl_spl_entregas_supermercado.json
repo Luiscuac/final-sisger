@@ -55,5 +55,6 @@
 			"schema": "silver",
 			"table": "tbl_spl_entregas_supermercado"
 		}
-	}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
 }

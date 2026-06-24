@@ -1,5 +1,5 @@
 {
-	"name": "AzureSqlTable1",
+	"name": "gold_dim_caja_salud",
 	"properties": {
 		"linkedServiceName": {
 			"referenceName": "dw_subsiduios",

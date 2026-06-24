@@ -9,10 +9,24 @@
 			"sources": [
 				{
 					"dataset": {
-						"referenceName": "gold_fact_logistica_agencia",
+						"referenceName": "tbl_agencia_recepciones",
 						"type": "DatasetReference"
 					},
-					"name": "srcFactLogistica"
+					"name": "source1"
+				},
+				{
+					"dataset": {
+						"referenceName": "tbl_agencia_despachos",
+						"type": "DatasetReference"
+					},
+					"name": "source2"
+				},
+				{
+					"dataset": {
+						"referenceName": "gold_dim_almacen",
+						"type": "DatasetReference"
+					},
+					"name": "source3"
 				}
 			],
 			"sinks": [
@@ -21,30 +35,102 @@
 						"referenceName": "gold_fact_logistica_agencia",
 						"type": "DatasetReference"
 					},
-					"name": "sinkLogisticaAgencia"
+					"name": "sink1"
 				}
 			],
-			"transformations": [],
+			"transformations": [
+				{
+					"name": "derivedColumn1"
+				},
+				{
+					"name": "derivedColumn2"
+				},
+				{
+					"name": "union1"
+				},
+				{
+					"name": "join1"
+				},
+				{
+					"name": "derivedColumn3"
+				},
+				{
+					"name": "select1"
+				}
+			],
 			"scriptLines": [
 				"source(output(",
-				"          tipo_movimiento as string,",
 				"          recepcion_id as integer,",
-				"          despacho_id as integer,",
-				"          fecha_key as integer,",
-				"          fecha_movimiento as date,",
-				"          almacen_key as integer,",
 				"          nro_lote as string,",
-				"          cantidad as decimal(18,2),",
+				"          almacen_id as integer,",
+				"          fecha_recepcion as date,",
+				"          cantidad_recibida as decimal(18,2),",
 				"          condicion as string,",
+				"          estado as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> source1",
+				"source(output(",
+				"          despacho_id as integer,",
+				"          recepcion_id as integer,",
+				"          nro_lote as string,",
+				"          almacen_id as integer,",
+				"          fecha_despacho as date,",
+				"          fecha_llegada as date,",
+				"          cantidad_despachada as decimal(18,2),",
 				"          centro_destino as string,",
 				"          estado as string",
 				"     ),",
 				"     allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     isolationLevel: 'READ_UNCOMMITTED',",
-				"     query: 'SELECT\\n    \\'RECEPCION\\' AS tipo_movimiento,\\n    r.recepcion_id,\\n    CAST(NULL AS INT) AS despacho_id,\\n    CONVERT(INT, CONVERT(CHAR(8), r.fecha_recepcion, 112)) AS fecha_key,\\n    r.fecha_recepcion AS fecha_movimiento,\\n    da.almacen_key,\\n    r.nro_lote,\\n    r.cantidad_recibida AS cantidad,\\n    r.condicion,\\n    CAST(NULL AS VARCHAR(200)) AS centro_destino,\\n    r.estado\\nFROM silver.tbl_agencia_recepciones r\\nLEFT JOIN gold.dim_almacen da\\n    ON r.almacen_id = da.almacen_id\\n\\nUNION ALL\\n\\nSELECT\\n    \\'DESPACHO\\' AS tipo_movimiento,\\n    d.recepcion_id,\\n    d.despacho_id,\\n    CONVERT(INT, CONVERT(CHAR(8), d.fecha_despacho, 112)) AS fecha_key,\\n    d.fecha_despacho AS fecha_movimiento,\\n    da.almacen_key,\\n    d.nro_lote,\\n    d.cantidad_despachada AS cantidad,\\n    CAST(NULL AS VARCHAR(150)) AS condicion,\\n    d.centro_destino,\\n    d.estado\\nFROM silver.tbl_agencia_despachos d\\nLEFT JOIN gold.dim_almacen da\\n    ON d.almacen_id = da.almacen_id',",
-				"     format: 'query') ~> srcFactLogistica",
-				"srcFactLogistica sink(allowSchemaDrift: true,",
+				"     format: 'table') ~> source2",
+				"source(output(",
+				"          almacen_key as integer,",
+				"          almacen_id as integer,",
+				"          nombre as string,",
+				"          municipio as string,",
+				"          departamento as string,",
+				"          capacidad_m3 as decimal(18,2)",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> source3",
+				"source1 derive(tipo_movimiento = 'RECEPCION',",
+				"          fecha_movimiento = fecha_recepcion,",
+				"          cantidad = cantidad_recibida,",
+				"          despacho_id = toInteger(null()),",
+				"          centro_destino = toString(null())) ~> derivedColumn1",
+				"source2 derive(tipo_movimiento = 'DESPACHO',",
+				"          fecha_movimiento = fecha_despacho,",
+				"          cantidad = cantidad_despachada,",
+				"          condicion = toString(null())) ~> derivedColumn2",
+				"derivedColumn1, derivedColumn2 union(byName: true)~> union1",
+				"union1, source3 join(union1@almacen_id == source3@almacen_id,",
+				"     joinType:'inner',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'auto')~> join1",
+				"join1 derive(fecha_key = toInteger(toString(fecha_movimiento, 'yyyyMMdd'))) ~> derivedColumn3",
+				"derivedColumn3 select(mapColumn(",
+				"          recepcion_id,",
+				"          nro_lote,",
+				"          condicion,",
+				"          estado,",
+				"          tipo_movimiento,",
+				"          fecha_movimiento,",
+				"          cantidad,",
+				"          despacho_id,",
+				"          centro_destino,",
+				"          almacen_key,",
+				"          fecha_key",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> select1",
+				"select1 sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     input(",
 				"          movimiento_fact_key as integer,",
@@ -80,7 +166,7 @@
 				"          condicion,",
 				"          centro_destino,",
 				"          estado",
-				"     )) ~> sinkLogisticaAgencia"
+				"     )) ~> sink1"
 			]
 		}
 	}

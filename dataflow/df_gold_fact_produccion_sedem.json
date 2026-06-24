@@ -9,10 +9,24 @@
 			"sources": [
 				{
 					"dataset": {
-						"referenceName": "gold_fact_produccion_sedem",
+						"referenceName": "tbl_sedem_produccion",
 						"type": "DatasetReference"
 					},
-					"name": "srcFactProduccion"
+					"name": "source1"
+				},
+				{
+					"dataset": {
+						"referenceName": "gold_dim_producto",
+						"type": "DatasetReference"
+					},
+					"name": "source2"
+				},
+				{
+					"dataset": {
+						"referenceName": "gold_dim_planta",
+						"type": "DatasetReference"
+					},
+					"name": "source3"
 				}
 			],
 			"sinks": [
@@ -21,19 +35,31 @@
 						"referenceName": "gold_fact_produccion_sedem",
 						"type": "DatasetReference"
 					},
-					"name": "sinkProduccion"
+					"name": "sink1"
 				}
 			],
-			"transformations": [],
+			"transformations": [
+				{
+					"name": "join1"
+				},
+				{
+					"name": "join2"
+				},
+				{
+					"name": "derivedColumn1"
+				},
+				{
+					"name": "select1"
+				}
+			],
 			"scriptLines": [
 				"source(output(",
 				"          produccion_id as integer,",
-				"          fecha_key as integer,",
+				"          planta_id as integer,",
+				"          producto_id as integer,",
+				"          nro_lote as string,",
 				"          fecha_produccion as date,",
 				"          fecha_vencimiento as date,",
-				"          producto_key as integer,",
-				"          planta_key as integer,",
-				"          nro_lote as string,",
 				"          cantidad_producida as decimal(18,2),",
 				"          cantidad_despachada as decimal(18,2),",
 				"          costo_produccion_bs as decimal(18,2),",
@@ -43,9 +69,63 @@
 				"     allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     isolationLevel: 'READ_UNCOMMITTED',",
-				"     query: 'SELECT\\n    p.produccion_id,\\n    CONVERT(INT, CONVERT(CHAR(8), p.fecha_produccion, 112)) AS fecha_key,\\n    p.fecha_produccion,\\n    p.fecha_vencimiento,\\n    dp.producto_key,\\n    dpl.planta_key,\\n    p.nro_lote,\\n    p.cantidad_producida,\\n    p.cantidad_despachada,\\n    p.costo_produccion_bs,\\n    p.unidad,\\n    p.estado\\nFROM silver.tbl_sedem_produccion p\\nLEFT JOIN gold.dim_producto dp\\n    ON p.producto_id = dp.producto_id\\nLEFT JOIN gold.dim_planta dpl\\n    ON p.planta_id = dpl.planta_id',",
-				"     format: 'query') ~> srcFactProduccion",
-				"srcFactProduccion sink(allowSchemaDrift: true,",
+				"     format: 'table') ~> source1",
+				"source(output(",
+				"          producto_key as integer,",
+				"          producto_id as integer,",
+				"          empresa_sigla as string,",
+				"          nombre_producto as string,",
+				"          categoria as string,",
+				"          presentacion as string,",
+				"          estado as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> source2",
+				"source(output(",
+				"          planta_key as integer,",
+				"          planta_id as integer,",
+				"          empresa_sigla as string,",
+				"          empresa_nombre as string,",
+				"          planta_nombre as string,",
+				"          tipo_planta as string,",
+				"          municipio as string,",
+				"          departamento as string,",
+				"          estado_operativo as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> source3",
+				"source1, source2 join(produccion_id == source2@producto_id,",
+				"     joinType:'inner',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'auto')~> join1",
+				"join1, source3 join(source1@planta_id == source3@planta_id,",
+				"     joinType:'inner',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'auto')~> join2",
+				"join2 derive(fecha_key = toInteger(toString(fecha_produccion, 'yyyyMMdd'))) ~> derivedColumn1",
+				"derivedColumn1 select(mapColumn(",
+				"          produccion_id,",
+				"          nro_lote,",
+				"          fecha_produccion,",
+				"          fecha_vencimiento,",
+				"          cantidad_producida,",
+				"          cantidad_despachada,",
+				"          costo_produccion_bs,",
+				"          unidad,",
+				"          producto_key,",
+				"          planta_key,",
+				"          fecha_key,",
+				"          estado = source1@estado",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> select1",
+				"select1 sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     input(",
 				"          produccion_fact_key as integer,",
@@ -83,7 +163,7 @@
 				"          costo_produccion_bs,",
 				"          unidad,",
 				"          estado",
-				"     )) ~> sinkProduccion"
+				"     )) ~> sink1"
 			]
 		}
 	}

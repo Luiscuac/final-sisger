@@ -1,0 +1,71 @@
+{
+	"name": "gold_fact_entregas_supermercado_spl",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "dw_subsiduios",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "gold"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "entrega_super_fact_key",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "entrega_super_id",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "asignacion_id",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "fecha_key",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "persona_key",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "empleador_key",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "supermercado_key",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "producto_descripcion",
+				"type": "varchar"
+			},
+			{
+				"name": "cantidad_kg",
+				"type": "decimal",
+				"precision": 18,
+				"scale": 2
+			},
+			{
+				"name": "monto_bs",
+				"type": "decimal",
+				"precision": 18,
+				"scale": 2
+			}
+		],
+		"typeProperties": {
+			"schema": "gold",
+			"table": "fact_entregas_supermercado_spl"
+		}
+	}
+}

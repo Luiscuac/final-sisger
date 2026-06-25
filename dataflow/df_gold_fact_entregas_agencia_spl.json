@@ -1,0 +1,188 @@
+{
+	"name": "df_gold_fact_entregas_agencia_spl",
+	"properties": {
+		"folder": {
+			"name": "gold"
+		},
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "tbl_spl_entregas_agencia",
+						"type": "DatasetReference"
+					},
+					"name": "srcEntregasAgencia"
+				},
+				{
+					"dataset": {
+						"referenceName": "tbl_spl_asignaciones",
+						"type": "DatasetReference"
+					},
+					"name": "srcAsignaciones"
+				},
+				{
+					"dataset": {
+						"referenceName": "gold_dim_persona",
+						"type": "DatasetReference"
+					},
+					"name": "srcDimPersona"
+				},
+				{
+					"dataset": {
+						"referenceName": "gold_dim_empleador",
+						"type": "DatasetReference"
+					},
+					"name": "srcDimEmpleador"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "gold_fact_entregas_agencia_spl",
+						"type": "DatasetReference"
+					},
+					"name": "sinkFactAgencia"
+				}
+			],
+			"transformations": [
+				{
+					"name": "joinAsignaciones"
+				},
+				{
+					"name": "joinPersona"
+				},
+				{
+					"name": "joinEmpleador"
+				},
+				{
+					"name": "derivedFecha"
+				},
+				{
+					"name": "selectFactAgencia"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          entrega_ag_id as integer,",
+				"          asignacion_id as integer,",
+				"          ci_beneficiaria as string,",
+				"          fecha_entrega as date,",
+				"          productos as string,",
+				"          lote as string,",
+				"          peso_kg as decimal(10,2),",
+				"          punto_entrega as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> srcEntregasAgencia",
+				"source(output(",
+				"          asignacion_id as integer,",
+				"          ci_beneficiaria as string,",
+				"          empleador_id as integer,",
+				"          mes as integer,",
+				"          gestion as integer,",
+				"          monto_bs as decimal(10,2),",
+				"          monto_productos as decimal(10,2),",
+				"          tipo_subsidio as string,",
+				"          estado as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> srcAsignaciones",
+				"source(output(",
+				"          persona_key as integer,",
+				"          ci as string,",
+				"          nombre_completo as string,",
+				"          nombres as string,",
+				"          apellido_paterno as string,",
+				"          apellido_materno as string,",
+				"          fecha_nacimiento as date,",
+				"          edad as integer,",
+				"          genero as string,",
+				"          estado_civil as string,",
+				"          numero_hijos as integer,",
+				"          profesion as string,",
+				"          nivel_estudios as string,",
+				"          municipio_residencia as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> srcDimPersona",
+				"source(output(",
+				"          empleador_key as integer,",
+				"          empleador_id as integer,",
+				"          razon_social as string,",
+				"          tipo as string,",
+				"          municipio as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> srcDimEmpleador",
+				"srcEntregasAgencia, srcAsignaciones join(srcEntregasAgencia@asignacion_id == srcAsignaciones@asignacion_id,",
+				"     joinType:'left',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'auto')~> joinAsignaciones",
+				"joinAsignaciones, srcDimPersona join(srcEntregasAgencia@ci_beneficiaria == ci,",
+				"     joinType:'left',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'auto')~> joinPersona",
+				"joinPersona, srcDimEmpleador join(srcAsignaciones@empleador_id == srcDimEmpleador@empleador_id,",
+				"     joinType:'left',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'auto')~> joinEmpleador",
+				"joinEmpleador derive(fecha_key = toInteger(toString(fecha_entrega, 'yyyyMMdd'))) ~> derivedFecha",
+				"derivedFecha select(mapColumn(",
+				"          entrega_ag_id,",
+				"          asignacion_id = srcEntregasAgencia@asignacion_id,",
+				"          fecha_key,",
+				"          persona_key,",
+				"          empleador_key,",
+				"          producto_descripcion = productos,",
+				"          lote,",
+				"          estado",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> selectFactAgencia",
+				"selectFactAgencia sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          entrega_agencia_fact_key as integer,",
+				"          entrega_ag_id as integer,",
+				"          asignacion_id as integer,",
+				"          fecha_key as integer,",
+				"          persona_key as integer,",
+				"          empleador_key as integer,",
+				"          producto_descripcion as string,",
+				"          lote as string,",
+				"          estado as string",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     mapColumn(",
+				"          entrega_ag_id,",
+				"          asignacion_id,",
+				"          fecha_key,",
+				"          persona_key,",
+				"          empleador_key,",
+				"          producto_descripcion,",
+				"          lote,",
+				"          estado",
+				"     )) ~> sinkFactAgencia"
+			]
+		}
+	}
+}

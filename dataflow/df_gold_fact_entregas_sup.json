@@ -39,7 +39,7 @@
 			"sinks": [
 				{
 					"dataset": {
-						"referenceName": "gold_fact_entregas_subsidio",
+						"referenceName": "gold_fact_entregas_sup",
 						"type": "DatasetReference"
 					},
 					"name": "sinkFactSup"
@@ -144,34 +144,12 @@
 				"          establecimiento_key,",
 				"          paquete_key,",
 				"          lote = lote_produccion,",
-				"          estado = estado_civil",
+				"          estado",
 				"     ),",
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true) ~> selectFactSup",
 				"selectFactSup sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
-				"     input(",
-				"          entrega_fact_key as integer,",
-				"          programa_key as integer,",
-				"          entrega_origen_id as integer,",
-				"          asignacion_id as integer,",
-				"          fecha_key as integer,",
-				"          fecha_entrega as date,",
-				"          persona_key as integer,",
-				"          establecimiento_key as integer,",
-				"          paquete_key as integer,",
-				"          empleador_key as integer,",
-				"          supermercado_key as integer,",
-				"          lote as string,",
-				"          producto_descripcion as string,",
-				"          cantidad_entregas as integer,",
-				"          peso_kg as decimal(18,2),",
-				"          cantidad_kg as decimal(18,2),",
-				"          monto_bs as decimal(18,2),",
-				"          costo_estimado_bs as decimal(18,2),",
-				"          estado as string,",
-				"          canal_entrega as string",
-				"     ),",
 				"     deletable:false,",
 				"     insertable:true,",
 				"     updateable:false,",
@@ -179,7 +157,16 @@
 				"     format: 'table',",
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true,",
-				"     errorHandlingOption: 'stopOnFirstError') ~> sinkFactSup"
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     mapColumn(",
+				"          entrega_id,",
+				"          fecha_key,",
+				"          persona_key,",
+				"          establecimiento_key,",
+				"          paquete_key,",
+				"          lote,",
+				"          estado",
+				"     )) ~> sinkFactSup"
 			]
 		}
 	}

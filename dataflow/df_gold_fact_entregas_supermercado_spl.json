@@ -166,7 +166,7 @@
 				"     matchType:'exact',",
 				"     ignoreSpaces: false,",
 				"     broadcast: 'auto')~> joinSupermercado",
-				"joinSupermercado derive(fecha_key = toInteger(toString(fecha_retiro, 'yyyyMMdd'))) ~> derivedFecha",
+				"joinSupermercado derive(fecha_key = iif(     isNull(fecha_retiro),     (gestion * 10000) + (mes * 100) + 1,     toInteger(toString(fecha_retiro, 'yyyyMMdd')) )) ~> derivedFecha",
 				"derivedFecha select(mapColumn(",
 				"          entrega_super_id,",
 				"          asignacion_id = srcEntregasSuper@asignacion_id,",

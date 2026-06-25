@@ -138,7 +138,7 @@
 				"     matchType:'exact',",
 				"     ignoreSpaces: false,",
 				"     broadcast: 'auto')~> joinEmpleador",
-				"joinEmpleador derive(fecha_key = toInteger(toString(fecha_entrega, 'yyyyMMdd'))) ~> derivedFecha",
+				"joinEmpleador derive(fecha_key = iif(     isNull(fecha_entrega),     (gestion * 10000) + (mes * 100) + 1,     toInteger(toString(fecha_entrega, 'yyyyMMdd')) )) ~> derivedFecha",
 				"derivedFecha select(mapColumn(",
 				"          entrega_ag_id,",
 				"          asignacion_id = srcEntregasAgencia@asignacion_id,",

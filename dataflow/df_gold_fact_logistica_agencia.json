@@ -110,7 +110,7 @@
 				"          condicion = toString(null())) ~> derivedColumn2",
 				"derivedColumn1, derivedColumn2 union(byName: true)~> union1",
 				"union1, source3 join(union1@almacen_id == source3@almacen_id,",
-				"     joinType:'inner',",
+				"     joinType:'left',",
 				"     matchType:'exact',",
 				"     ignoreSpaces: false,",
 				"     broadcast: 'auto')~> join1",

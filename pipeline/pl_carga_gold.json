@@ -22,7 +22,7 @@
 					"scripts": [
 						{
 							"type": "Query",
-							"text": "DELETE FROM gold.fact_entregas_subsidio;\nDELETE FROM gold.fact_logistica_agencia;\nDELETE FROM gold.fact_produccion_sedem;\nDELETE FROM gold.fact_asignaciones_spl;\n\nDELETE FROM gold.dim_fecha;\nDELETE FROM gold.dim_persona;\nDELETE FROM gold.dim_programa;\nDELETE FROM gold.dim_producto;\nDELETE FROM gold.dim_planta;\nDELETE FROM gold.dim_almacen;\nDELETE FROM gold.dim_establecimiento;\nDELETE FROM gold.dim_paquete;\nDELETE FROM gold.dim_empleador;\nDELETE FROM gold.dim_supermercado;"
+							"text": "DELETE FROM gold.fact_entregas_supermercado_spl;\nDELETE FROM gold.fact_entregas_agencia_spl;\nDELETE FROM gold.fact_entregas_sup;\nDELETE FROM gold.fact_entregas_subsidio;\nDELETE FROM gold.fact_logistica_agencia;\nDELETE FROM gold.fact_produccion_sedem;\nDELETE FROM gold.fact_asignaciones_spl;\n\nDELETE FROM gold.dim_fecha;\nDELETE FROM gold.dim_persona;\nDELETE FROM gold.dim_programa;\nDELETE FROM gold.dim_producto;\nDELETE FROM gold.dim_planta;\nDELETE FROM gold.dim_almacen;\nDELETE FROM gold.dim_establecimiento;\nDELETE FROM gold.dim_paquete;\nDELETE FROM gold.dim_empleador;\nDELETE FROM gold.dim_supermercado;"
 						}
 					],
 					"scriptBlockExecutionTimeout": "02:00:00"
@@ -432,7 +432,7 @@
 				}
 			},
 			{
-				"name": "act_df_gold_fact_entregas_subsidio",
+				"name": "act_df_gold_fact_entregas_sup",
 				"type": "ExecuteDataFlow",
 				"dependsOn": [
 					{
@@ -452,7 +452,69 @@
 				"userProperties": [],
 				"typeProperties": {
 					"dataflow": {
-						"referenceName": "df_gold_fact_entregas_subsidio",
+						"referenceName": "df_gold_fact_entregas_sup",
+						"type": "DataFlowReference"
+					},
+					"compute": {
+						"coreCount": 8,
+						"computeType": "General"
+					},
+					"traceLevel": "Fine"
+				}
+			},
+			{
+				"name": "act_df_gold_fact_entregas_agencia_spl",
+				"type": "ExecuteDataFlow",
+				"dependsOn": [
+					{
+						"activity": "act_df_gold_fact_entregas_sup",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataflow": {
+						"referenceName": "df_gold_fact_entregas_agencia_spl",
+						"type": "DataFlowReference"
+					},
+					"compute": {
+						"coreCount": 8,
+						"computeType": "General"
+					},
+					"traceLevel": "Fine"
+				}
+			},
+			{
+				"name": "act_df_gold_fact_entregas_supermercado_spl",
+				"type": "ExecuteDataFlow",
+				"dependsOn": [
+					{
+						"activity": "act_df_gold_fact_entregas_agencia_spl",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataflow": {
+						"referenceName": "df_gold_fact_entregas_supermercado_spl",
 						"type": "DataFlowReference"
 					},
 					"compute": {
